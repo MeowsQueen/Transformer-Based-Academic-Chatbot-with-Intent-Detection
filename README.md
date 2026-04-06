@@ -51,7 +51,7 @@ The system consists of three main components:
 ## Repository Structure
 
 ```text
-Transformer-Based-Academic-Chatbot-with-Intent-Detection/
+Transformer-Based-Academic-Chatbot-with-Intent-Detection-and-RAG-lite-Response-Generation/
 │
 ├── data/
 │   ├── raw/
