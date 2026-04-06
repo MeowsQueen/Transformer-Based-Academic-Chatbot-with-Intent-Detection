@@ -55,8 +55,6 @@ Transformer-Based-Academic-Chatbot-with-Intent-Detection-and-RAG-lite-Response-G
 │
 ├── data/
 │   ├── raw/
-│   │   └── clinc150_full.json
-│   │
 │   └── processed/
 │       ├── clinc_subset_train.csv
 │       ├── clinc_subset_val.csv
@@ -71,6 +69,10 @@ Transformer-Based-Academic-Chatbot-with-Intent-Detection-and-RAG-lite-Response-G
 │   ├── generate.py
 │   ├── chatbot.py
 │   └── app.py
+│
+├── models/
+│   ├── intent_classifier.pkl
+│   └── kb_embeddings.npy
 │
 ├── results/
 │   ├── metrics.txt
