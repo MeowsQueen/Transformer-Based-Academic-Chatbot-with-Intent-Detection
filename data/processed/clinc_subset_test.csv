@@ -1,0 +1,211 @@
+﻿text,intent
+what does peer-to-peer actually mean,concept_query
+"reserve a meeting room for friday, 5pm",scheduling_action
+how would i say i love you if i were german,language_assistance
+what did i want to remember,task_management
+how do you say dog in spanish,language_assistance
+help me set up a meeting please,scheduling_action
+"i heard some woman say she was going to yerd me, what's that mean",concept_query
+have i told you to add washing dishes to my todo list,task_management
+what should i call you,agent_identity
+list my reminders,task_management
+do i have any appoints set for my calendar april 3rd,schedule_query
+what's on my todo list for today,task_management
+"i'd like to just confirm all of the reminders currently on my list of reminders, please",task_management
+on tuesday you are supposed to have a meeting,schedule_query
+do you take orders from someone else,agent_identity
+how do i say i'm sorry in chinese,language_assistance
+can you reserve a room for a friday meeting at 5pm,scheduling_action
+what should you be called,agent_identity
+"i need to schedule meeting room for monday at 2:30 pm, please",scheduling_action
+"do a job search on monstercom for jobs in the tech field in arlington, va",oos
+how would i say where is the bathroom if i were korean,language_assistance
+what does circuitous mean,concept_query
+i can't remember if i added the fun run to my calendar yet; did i,schedule_query
+what causes dyslexia,oos
+how many hits have i done today,oos
+do i have any items on my calendar for march 21st,schedule_query
+what do you like to be called,agent_identity
+what do i have going on on my calendar for march 18th,schedule_query
+does someone else control you,agent_identity
+can you book a meeting room for friday at 9:00 am,scheduling_action
+let me hear my todo list,task_management
+how would you say fly in italian,language_assistance
+what is my checking account number,oos
+how would i say i am lost if i were japanese,language_assistance
+are polar bears on the endangered species list,oos
+did i mark the mechanic's appointment on my calendar,schedule_query
+give me my reminders,task_management
+what's the best price on a gray xl ll bean men's parka,oos
+how might i say hello if i were scottish,language_assistance
+please book a meeting room for thusday at 4:00,scheduling_action
+read my reminder list,task_management
+i need to know how to schedule a meeting,scheduling_action
+please reserve a meeting room for 1:00 pm on tuesday,scheduling_action
+find articles that can help me advance my position in my work field,oos
+check on my to-do list items,task_management
+what is the right way to say excuse me in spanish,language_assistance
+"go ahead and hold a conference room for friday at 11 am, please",scheduling_action
+how do you say please in french,language_assistance
+how much does it cost to use the parking garage downtown,oos
+what's the definition of remunerative,concept_query
+who is your job with,agent_identity
+what items are on my list of to-dos,task_management
+how many kilowatts have i used this month,oos
+tell me what your name is,agent_identity
+i want to know who your boss is,agent_identity
+what's on my calendar for march 20th,schedule_query
+do i have any appointments on my calendar march 22nd,schedule_query
+dog in spanish,language_assistance
+what would the word for grass be in finland,language_assistance
+"ai, what is your given name",agent_identity
+is my meeting with frank on my calendar,schedule_query
+what does assiduous mean,concept_query
+is the movie avatar culturally insensitive,oos
+have i gotten around to adding the bike ride to my calendar yet,schedule_query
+how do you say fast in spanish,language_assistance
+give me my to-do list,task_management
+what stuff am i trying to remember,task_management
+what does yolo mean,concept_query
+what did they name you,agent_identity
+what does adulation mean,concept_query
+do i own you,agent_identity
+what's the definition of luminescent,concept_query
+what does water taste like,oos
+how do you relieve a hangover,oos
+you have yo go to school on calendar,schedule_query
+can you tell me what dendrofilous means,concept_query
+which actors have played more than 1 comic book character,oos
+open meeting rooms from one to three pm,scheduling_action
+what's the spanish word for pasta,language_assistance
+can you tell me the meaning of fluctuate,concept_query
+is make a hair appointment on my todo list right now,task_management
+english to spanish for dog,language_assistance
+is anything on my calendar for june 22nd,schedule_query
+who do you take your orders from,agent_identity
+is the marathon on friday added to my calendar,schedule_query
+one and three pm are there meeting rooms open,scheduling_action
+what's on my calendar on march 10th,schedule_query
+what do i call you,agent_identity
+how would they say butter in zambia,language_assistance
+define discontent,concept_query
+"check my calendar for me, please",schedule_query
+how much is the new nikon camera,oos
+can you colorize a black and white photo,oos
+how would one say cruiser in china,language_assistance
+retrieve events on my calendar,schedule_query
+define epicurean,concept_query
+put on an educational program about buddhism,oos
+how would i say what is your name if i were french,language_assistance
+give me your name so i can use you,agent_identity
+is event on my calendar,schedule_query
+what is the extra digits that are sometimes included on my zip code,oos
+what does the word polynomial mean,concept_query
+"what do i call you, ai",agent_identity
+refresh my memory about what items i want to remember,task_management
+could you schedule a meeting room for 4:00 on thursday,scheduling_action
+what's your name,agent_identity
+what is the name of the place you work at,agent_identity
+i would like you to reserve a conference room for noon tomorrow,scheduling_action
+can you tell me the to do's on my reminder list,task_management
+tell me what's on my calendar for march 22nd,schedule_query
+am i in charge of you,agent_identity
+can you tell me what obsolescence means,concept_query
+look up which animal is represented in this year's chinese new year,oos
+reserve a meeting room for 5pm on friday,scheduling_action
+is bowling on my calendar,schedule_query
+is it possible to read my to-do list again,task_management
+what channel is cw on,oos
+who do i have the pleasure of speaking with,agent_identity
+how would i say i need directions if i were french,language_assistance
+do i have any calendar entries for march 8th,schedule_query
+what meeting rooms are available for meeting 5pm friday,scheduling_action
+"i need a meeting room between 3-7, are any available",scheduling_action
+who is in charge of you when you work,agent_identity
+what must i do today,task_management
+what items did i want to remember,task_management
+what's the word for trees in norway,language_assistance
+do you know if meeting rooms are open to use 1-2,scheduling_action
+what's the french word you use for potato,language_assistance
+what does amicable mean,concept_query
+did i set march 10th as my doctor's appointment,schedule_query
+what does serendipity mean,concept_query
+read my calendar for march 7th,schedule_query
+what would you like me to call you,agent_identity
+are meeting rooms free between 8-3,scheduling_action
+walk me through the process of scheduling a meeting,scheduling_action
+what is dog in spanish,language_assistance
+define antebellum,concept_query
+can you check if meeting rooms are available between 4 and 5,scheduling_action
+what is the meaning of incandescent,concept_query
+can you check how many miles i walked today when i was out get the info from my phone,oos
+check meeting room availability between one and three pm,scheduling_action
+what does anachronistic mean,concept_query
+what day did i set on my calendar for the first day of school,schedule_query
+what name do you go by,agent_identity
+what movie is it that says today is a good day to die,oos
+what does epicurean mean,concept_query
+what events do i have going on on march 11th,schedule_query
+what is on my to-do list,task_management
+can you tell me if there are meeting rooms available between 1 and 4,scheduling_action
+i want to know my reminders,task_management
+what does confrontation mean,concept_query
+how would i say how are you today if i were mexican,language_assistance
+what's the definition of unencumbered,concept_query
+who am i speaking with,agent_identity
+scan my photos and tell me which hair style is most suiting for my face,oos
+accept incoming phone call,oos
+what's the spanish word for dog,language_assistance
+did i put grocery shopping on my todo list,task_management
+is my todo list possible today,task_management
+how do they say tacos in mexico,language_assistance
+do i control you,agent_identity
+let me know who your boss is,agent_identity
+what is the definiton of auspicious,concept_query
+what did i ask you to remind me of,task_management
+do i have calendar events on march 19th,schedule_query
+i would like to know who your boss is,agent_identity
+would you please schedule a meeting room for 4:00 on thursday,scheduling_action
+how does one say wonderful in german,language_assistance
+what is my to-do list like today,task_management
+what do i have planned for 3/5,schedule_query
+i need assistance scheduling a meeting,scheduling_action
+my list of reminders contains what,task_management
+how do i say bathroom in italian,language_assistance
+what does mature mean,concept_query
+what supplies do i need to clean my car,oos
+i'd like to know what bitcoin means,concept_query
+friday 5pm schedule a room for meeting,scheduling_action
+what kinds of things are you supposed to remind me of,task_management
+will you schedule a conference room for thursday at 4:00,scheduling_action
+what is the meaning of the word girn,concept_query
+what's the meaning of naff,concept_query
+i must know how to say thank you in german,language_assistance
+who's your boss,agent_identity
+what's the definition of idiosyncratic,concept_query
+can you reserve a meeting space for 4:00 on thursday,scheduling_action
+give me my todo list,task_management
+do i have my nephew's birthday marked for november 10th,schedule_query
+please explain the word catastrophic to me,concept_query
+check meeting rooms available between one and three pm,scheduling_action
+"is ""cleaning the bathroom"" an item on my todo list",task_management
+would you let me know who your boss is,agent_identity
+what does ferrari mean,concept_query
+do i have any calendars set for may 12th,schedule_query
+did i set a day on my calendar for voting in the next election,schedule_query
+meeting rooms open between one and three pm,scheduling_action
+is gambling legal in my state,oos
+sell three calls of of nvda,oos
+how can i get a better rate on my card,oos
+how would i say thank you if i were mexican,language_assistance
+how would i say nice to meet you if i were russian,language_assistance
+have i added my doctor's appointment to my calendar,schedule_query
+what's on my todo list,task_management
+what is your preferred name,agent_identity
+"on my reminders list, is there an item called conference call",task_management
+how would i say i must be going now if i were german,language_assistance
+what is the warranty on my microwave,oos
+"ai, what is your name",agent_identity
+what do i put on my feet,oos
+please help me figure out how to set up a meeting,scheduling_action
+how many dvds do i currently have on file,oos

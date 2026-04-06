@@ -1,0 +1,141 @@
+﻿text,intent
+can you please set up a meeting for 3:00 on wednesday,scheduling_action
+is it bad to not remember your dreams,oos
+what is the meaning of fascism,concept_query
+schedule a monday meeting with sam at 1 pm,scheduling_action
+"would you translate a sentence into russian for me, please",language_assistance
+do you work for a different employer,agent_identity
+are there any active events for march 4th 2019,schedule_query
+set a warning for when my bank account starts running low,oos
+please set a meeting with nancy at 4 pm,scheduling_action
+can you create a meeting for 3:00 on wednesday,scheduling_action
+can you hook up a meeting for 3:00 on wednesday,scheduling_action
+how do i say thank you in spanish,language_assistance
+am kind of busy now,oos
+do you mind if i ask your name,agent_identity
+what are the things i wanted to recall,task_management
+show me the channel guide,oos
+who is your supervisor,agent_identity
+can you tell me what a septuagenarian is,concept_query
+is there anything on my todo list for taking out the trash,task_management
+please schedule a meeting room for 9am on friday,scheduling_action
+what does idiosyncratic mean,concept_query
+make sure i get a meeting room for 9am on friday,scheduling_action
+what is the friendliest breed,oos
+who is your superior,agent_identity
+what was it i wanted to remember,task_management
+what does indignation mean,concept_query
+please read my reminder list,task_management
+what do i have going on for 12/03/2019,schedule_query
+provide me the name of your boss,agent_identity
+do you work for another person,agent_identity
+what is your name by chance,agent_identity
+how can i set up a meeting,scheduling_action
+can you arrange a meeting for 3:00 on wednesday,scheduling_action
+what appointments do i have tomorrow after 1:00pm,schedule_query
+how do you say hello in japanese,language_assistance
+how do i say dinner in spanish,language_assistance
+is my day open for march 4th 2019,schedule_query
+tell me my reminder list,task_management
+what university in the united states offers the best biomedical engineering program,oos
+who do you say you work for,agent_identity
+how do you say hello in mexico,language_assistance
+what is the definition of the word migrate,concept_query
+"in spanish, meet me tomorrow is said how",language_assistance
+tell me the meaning of condemnation,concept_query
+read back my day for march 4th 2019,schedule_query
+is vacuuming on my todo list,task_management
+schedule my meeting with jim at 3pm,scheduling_action
+where do black holes come from,oos
+how do i say good bye in chinese,language_assistance
+do you work for another individual,agent_identity
+is anything happening on march 4th 2019,schedule_query
+please define erection for me,concept_query
+what does distinguish mean,concept_query
+i want you to set a meeting with john at 5 pm,scheduling_action
+how do you know when your dog is ill,oos
+how do i set up a meeting,scheduling_action
+how do i ask about the weather in chinese,language_assistance
+please define institutional racism,concept_query
+can you check what is on my calendar for tuesday,schedule_query
+is it true that nicotine is harder to kick than heroin,oos
+"who are you employed by, please",agent_identity
+tell me please what paean means,concept_query
+what dog breed sold the most in 2018,oos
+what does unsavory mean,concept_query
+does my calendar show anything for thursday the 14th,schedule_query
+how many countries in the world are democracies,oos
+can i mix antifreeze with water,oos
+what were those things i wanted to remember,task_management
+could you translate water into dutch for me,language_assistance
+are you one of my employees,agent_identity
+what is tuesday's calendar like,schedule_query
+what is the date of my next scheduled dentist appointment,schedule_query
+would you translate a phrase into mandarin for me,language_assistance
+define ambivalence for me please,concept_query
+can you define the word schadenfreude,concept_query
+what's my schedule like for thursday the 14th,schedule_query
+what exactly is your name,agent_identity
+"in french, how do i say, see you later",language_assistance
+what is happening with brexit right nowu,oos
+where do i have to be on 12/03/2019,schedule_query
+get me a meeting room for 9am on friday,scheduling_action
+did i put cutting the grass on my todo list,task_management
+can i have your name,agent_identity
+what's the name you were given,agent_identity
+did i make a note on my todo list to mop the bathroom floor,task_management
+what is your names,agent_identity
+what's your name if i may ask,agent_identity
+define antagonist for me please,concept_query
+how does a democracy work,oos
+what do i do to schedule a meeting,scheduling_action
+i'd like to know your name,agent_identity
+do i have anything scheduled for thursday the 14th,schedule_query
+what is my plan for the day,task_management
+list the things i wanted to remember,task_management
+"how can i say ""cancel my order"" in french",language_assistance
+tell me how to say hello in chile,language_assistance
+what appointments do i have on thursday the 14th,schedule_query
+would you tell me how to say goodbye in france,language_assistance
+is cleaning the garage on my to do list,task_management
+is marijuana addictive,oos
+will you please tell me my to do list,task_management
+is autism a genetic disease,oos
+arrange a meeting room for 9am on friday,scheduling_action
+check what's on my calendar for tuesday,schedule_query
+"can you translate this name into spanish for me, please",language_assistance
+i want to know how to say goodbye in france,language_assistance
+can you tell me what my calendar is like for thursday the 14th,schedule_query
+"could you translate this into chinese for me, please",language_assistance
+"check my calendar for march 4th 2019, please",schedule_query
+read all my reminders,task_management
+read my reminder list to me please,task_management
+i need to know how to say hello in france,language_assistance
+how many onions do i have on hand,oos
+define monetary for me please,concept_query
+do i have anything on my todo list,task_management
+how do you say good bye in french,language_assistance
+what are black holes,oos
+what is it i wanted to bear in mind,task_management
+tell me the meaning of hegemony,concept_query
+what is the meaning of word alliance,concept_query
+what is the process to schedule a meeting,scheduling_action
+what do i need to do,task_management
+specify who your boss is,agent_identity
+how can i say thank you very much in chinese,language_assistance
+i need to know what dominate means,concept_query
+i want the name of your boss,agent_identity
+i want to know what trenchant means,concept_query
+what is the process to set up a meeting,scheduling_action
+do i have anything scheduled on my calendar for next tuesday,schedule_query
+please schedule a meeting with kim at 10 am,scheduling_action
+what is tuesday like on my calendar,schedule_query
+how can i easily replace a string on my guitar,oos
+what are the things that i wanted to keep in mind,task_management
+can you tell me if there is anything on my todo list,task_management
+may i please have a definition for the work churlish,concept_query
+find out for me as to why people get autism,oos
+secure us a meeting room for 9am on friday,scheduling_action
+do you have a nickname,agent_identity
+do i have plans on 12/03/2019,schedule_query
+is it possible for you to schedule a meeting for 3:00 on wednesday,scheduling_action
