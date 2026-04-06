@@ -52,9 +52,10 @@ The system consists of three main components:
 
 ```text
 Transformer-Based-Academic-Chatbot-with-Intent-Detection-and-RAG-lite-Response-Generation/
-│
 ├── data/
 │   ├── raw/
+│   │   └── clinc150_full.json
+│   │
 │   └── processed/
 │       ├── clinc_subset_train.csv
 │       ├── clinc_subset_val.csv
