@@ -161,3 +161,40 @@ python src/train_intent_classifier.py
 ```bash
 streamlit run src/app.py
 ```
+
+## Example Queries
+
+### Academic / Course Queries
+
+* "When is the final exam?"
+* "How is the course graded?"
+* "Who is the instructor?"
+
+### Conceptual Questions
+
+* "What is a transformer?"
+* "Explain embeddings in NLP"
+* "What is the difference between BERT and GPT?"
+
+### Out-of-Scope Example
+
+* "Tell me a joke"
+
+## Key Contributions
+
+* Hybrid NLP system combining **intent classification** and **retrieval**
+* Use of a real-world dataset (**CLINC150**) for intent modeling
+* Integration of **transformer-based embeddings**
+* Domain-adapted academic chatbot design
+* Modular and extensible architecture
+
+## Limitation
+
+* Performance depends on knowledge base coverage
+
+## Future Work
+
+* Implement Retrieval-Augmented Generation (RAG)
+* Replace classifier with fine-tuned BERT
+
+
