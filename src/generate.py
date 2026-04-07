@@ -7,72 +7,37 @@ Original file is located at
     https://colab.research.google.com/drive/1YClK0OfTWRKAr5axxqzmNjPmM-vgjFR4
 """
 
-import torch
-from transformers import AutoTokenizer, AutoModelForSeq2SeqLM
+from typing import List, Dict
 
 
-MODEL_NAME = "google/flan-t5-base"
-DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
+def build_prompt(query: str, retrieved_docs: List[Dict]) -> str:
+    context_block = ""
 
+    for i, doc in enumerate(retrieved_docs):
+        context_block += f"{i+1}. {doc['context']}\n"
 
-class Generator:
-    def __init__(self, model_name: str = MODEL_NAME):
-        self.tokenizer = AutoTokenizer.from_pretrained(model_name)
-        self.model = AutoModelForSeq2SeqLM.from_pretrained(model_name).to(DEVICE)
-        self.model.eval()
+    prompt = f"""
+You are an academic assistant.
 
-    def build_prompt(self, query: str, retrieved_docs: list[dict]) -> str:
-        context_blocks = []
+Use the following context to answer the question clearly and concisely.
 
-        for i, doc in enumerate(retrieved_docs[:3], start=1):
-            context_blocks.append(
-                f"Document {i}:\n"
-                f"Topic: {doc.get('topic', '')}\n"
-                f"Answer hint: {doc.get('answer_hint', '')}\n"
-                f"Context: {doc.get('context', '')}\n"
-            )
-
-        context_text = "\n".join(context_blocks)
-
-        prompt = f"""
-Answer the question using only the information in the documents below.
-Write a short and clear answer in 1 to 3 sentences.
-
-Documents:
-{context_text}
+Context:
+{context_block}
 
 Question:
 {query}
 
 Answer:
 """
-        return prompt.strip()
+    return prompt.strip()
 
-    def generate_answer(self, query: str, retrieved_docs: list[dict]) -> str:
-        if not retrieved_docs:
-            return "I could not find relevant information."
 
-        prompt = self.build_prompt(query, retrieved_docs)
+def generate_answer(query: str, retrieved_docs: List[Dict]) -> str:
+    """
+    Lightweight response generation grounded in retrieved content.
+    """
+    if not retrieved_docs:
+        return "I could not find relevant information."
 
-        inputs = self.tokenizer(
-            prompt,
-            return_tensors="pt",
-            truncation=True,
-            max_length=1024
-        ).to(DEVICE)
-
-        with torch.no_grad():
-            outputs = self.model.generate(
-                **inputs,
-                max_new_tokens=80,
-                num_beams=4,
-                do_sample=False,
-                early_stopping=True
-            )
-
-        answer = self.tokenizer.decode(outputs[0], skip_special_tokens=True).strip()
-
-        if not answer:
-            return retrieved_docs[0]["answer_hint"]
-
-        return answer
+    best = retrieved_docs[0]
+    return f"{best['answer_hint']} (Based on course knowledge.)"
