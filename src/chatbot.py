@@ -26,6 +26,9 @@ def rule_based_override(query: str):
     """
     q = query.lower()
 
+    if any(word in q for word in ["joke", "funny", "song", "music", "weather", "traffic", "uber"]):
+    return "oos"
+
     # identity / instructor
     if any(word in q for word in ["instructor", "teacher", "lecturer", "coordinator", "who teaches"]):
         return "agent_identity"
