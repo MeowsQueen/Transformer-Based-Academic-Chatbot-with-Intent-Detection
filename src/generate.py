@@ -7,40 +7,83 @@ Original file is located at
     https://colab.research.google.com/drive/1YClK0OfTWRKAr5axxqzmNjPmM-vgjFR4
 """
 
+from pathlib import Path
 from typing import List, Dict
 
+import torch
+from transformers import AutoTokenizer, AutoModelForSeq2SeqLM
 
-def build_prompt(query: str, retrieved_docs: List[Dict]) -> str:
-    """
-    Create a prompt from retrieved contexts.
-    """
-    context_block = ""
 
-    for i, doc in enumerate(retrieved_docs):
-        context_block += f"{i+1}. {doc['context']}\n"
+MODEL_NAME = "google/flan-t5-large"
+DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
 
-    prompt = f"""
+
+class Generator:
+    def __init__(self, model_name: str = MODEL_NAME):
+        self.tokenizer = AutoTokenizer.from_pretrained(model_name)
+        self.model = AutoModelForSeq2SeqLM.from_pretrained(model_name).to(DEVICE)
+        self.model.eval()
+
+    def build_prompt(self, query: str, retrieved_docs: List[Dict]) -> str:
+        context_blocks = []
+        for i, doc in enumerate(retrieved_docs[:3], start=1):
+            context_blocks.append(
+                f"[Document {i}]\n"
+                f"Topic: {doc.get('topic', '')}\n"
+                f"Context: {doc.get('context', '')}\n"
+            )
+
+        context_text = "\n".join(context_blocks)
+
+        prompt = f"""
 You are an academic assistant.
 
-Use the following context to answer the question clearly and concisely.
+Answer the user's question using only the provided context.
+If the answer is not clearly supported by the context, say:
+"I am not confident that this question is covered by the academic knowledge base."
+
+Rules:
+- Be concise and factual.
+- Do not invent information.
+- Prefer 1-3 sentences.
+- Use only the context below.
 
 Context:
-{context_block}
+{context_text}
 
 Question:
 {query}
 
 Answer:
 """
-    return prompt.strip()
+        return prompt.strip()
 
+    def generate_answer(self, query: str, retrieved_docs: List[Dict]) -> str:
+        if not retrieved_docs:
+            return "I am not confident that this question is covered by the academic knowledge base."
 
-def generate_answer(query: str, retrieved_docs: List[Dict]) -> str:
-    """
-    Lightweight RAG-style answer generation.
-    """
-    if not retrieved_docs:
-        return "I could not find relevant information."
+        prompt = self.build_prompt(query, retrieved_docs)
 
-    best = retrieved_docs[0]
-    return f"{best['answer_hint']} (Based on course knowledge.)"
+        inputs = self.tokenizer(
+            prompt,
+            return_tensors="pt",
+            truncation=True,
+            max_length=1024
+        ).to(DEVICE)
+
+        with torch.no_grad():
+            outputs = self.model.generate(
+                **inputs,
+                max_new_tokens=96,
+                num_beams=4,
+                do_sample=False,
+                length_penalty=1.0,
+                early_stopping=True
+            )
+
+        answer = self.tokenizer.decode(outputs[0], skip_special_tokens=True).strip()
+
+        if not answer:
+            return "I am not confident that this question is covered by the academic knowledge base."
+
+        return answer
