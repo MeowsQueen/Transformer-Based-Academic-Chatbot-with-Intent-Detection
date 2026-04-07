@@ -11,6 +11,9 @@ from typing import List, Dict
 
 
 def build_prompt(query: str, retrieved_docs: List[Dict]) -> str:
+    """
+    Create a prompt from retrieved contexts.
+    """
     context_block = ""
 
     for i, doc in enumerate(retrieved_docs):
