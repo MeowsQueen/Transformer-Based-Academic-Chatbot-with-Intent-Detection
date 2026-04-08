@@ -67,8 +67,46 @@ def detect_query_type(query: str) -> str:
     return "default"
 
 
-def score_doc_for_generation(doc: Dict, query_type: str) -> float:
+def extract_query_entities(query: str) -> List[str]:
+    q = query.lower()
+
+    keywords = [
+        "project",
+        "exam",
+        "final exam",
+        "assignment",
+        "grading",
+        "instructor",
+        "coordinator",
+        "rag",
+        "bert",
+        "ner",
+        "tokenization",
+        "tokenizer",
+        "token",
+        "tokens",
+        "llm",
+        "llms",
+        "mllm",
+        "vector database",
+        "fine tuning",
+        "transformer",
+        "transformers",
+        "embedding",
+        "embeddings",
+    ]
+
+    found = []
+    for k in keywords:
+        if k in q:
+            found.append(k)
+
+    return found
+
+
+def score_doc_for_generation(doc: Dict, query: str, query_type: str) -> float:
     score = float(doc.get("score", 0.0))
+
     topic = str(doc.get("topic", "")).lower()
     subtopic = str(doc.get("subtopic", "")).lower()
     qv = str(doc.get("question_variation", "")).lower()
@@ -77,7 +115,20 @@ def score_doc_for_generation(doc: Dict, query_type: str) -> float:
 
     text = " ".join([topic, subtopic, qv, hint, context])
 
-    # overview questions should strongly prefer overview-like records
+    # -------------------------
+    # Entity-aware scoring
+    # -------------------------
+    entities = extract_query_entities(query)
+    if entities:
+        match = any(e in text for e in entities)
+        if match:
+            score += 0.40
+        else:
+            score -= 0.25
+
+    # -------------------------
+    # Query-type-aware scoring
+    # -------------------------
     if query_type == "overview":
         if any(x in subtopic for x in ["overview", "course_content", "content_overview"]):
             score += 0.35
@@ -86,14 +137,12 @@ def score_doc_for_generation(doc: Dict, query_type: str) -> float:
         if "weekly_schedule" in topic or "week" in subtopic:
             score -= 0.10
 
-    # existence questions should prefer relation / inclusion style records
     elif query_type == "existence":
         if any(x in text for x in ["yes,", "includes", "has a", "has an", "project component", "course includes"]):
-            score += 0.25
-        if "weight" in subtopic or "weights" in subtopic:
+            score += 0.20
+        if any(x in subtopic for x in ["weight", "weights"]):
             score -= 0.08
 
-    # week / timing questions
     elif query_type == "when":
         if any(x in subtopic for x in ["timing", "week", "schedule"]):
             score += 0.40
@@ -102,29 +151,24 @@ def score_doc_for_generation(doc: Dict, query_type: str) -> float:
         if "course_relation" in subtopic:
             score -= 0.10
 
-    # weight / grade contribution questions
     elif query_type == "weight":
         if any(x in subtopic for x in ["weight", "weights", "grading"]):
             score += 0.35
         if any(x in text for x in ["percent", "%", "contributes", "weight"]):
             score += 0.20
 
-    # comparison questions
     elif query_type == "comparison":
         if any(x in text for x in ["difference", "while", "whereas", "compared"]):
             score += 0.30
 
-    # why questions
     elif query_type == "why":
         if any(x in text for x in ["because", "important", "helps", "used for", "matters", "affects"]):
             score += 0.25
 
-    # who questions
     elif query_type == "who":
         if any(x in text for x in ["instructor", "coordinator", "lecturer"]):
             score += 0.30
 
-    # definitions
     elif query_type == "definition":
         if any(x in text for x in ["what is", "what are", "is a", "refers to", "defined as"]):
             score += 0.18
@@ -137,7 +181,7 @@ def rerank_docs_for_generation(query: str, docs: List[Dict]) -> List[Dict]:
 
     rescored = []
     for doc in docs:
-        rescored.append((score_doc_for_generation(doc, query_type), doc))
+        rescored.append((score_doc_for_generation(doc, query, query_type), doc))
 
     rescored.sort(key=lambda x: x[0], reverse=True)
     return [doc for _, doc in rescored]
@@ -153,33 +197,41 @@ def deduplicate_hints(hints: List[str]) -> List[str]:
 
 
 def generate_overview_answer(docs: List[Dict]) -> str:
-    # prefer a single clean overview answer if present
     for doc in docs:
         subtopic = str(doc.get("subtopic", "")).lower()
         hint = str(doc.get("answer_hint", "")).strip()
         if subtopic == "overview" and hint:
             return hint
-
-    # fallback: first good answer
     return str(docs[0].get("answer_hint", "")).strip()
 
 
-def generate_existence_answer(docs: List[Dict]) -> str:
+def generate_existence_answer(docs: List[Dict], query: str) -> str:
+    entities = extract_query_entities(query)
+
+    # prefer docs that explicitly match the asked entity
     for doc in docs:
-        hint = str(doc.get("answer_hint", "")).strip()
-        if hint:
-            return hint
+        text = " ".join([
+            str(doc.get("topic", "")),
+            str(doc.get("subtopic", "")),
+            str(doc.get("question_variation", "")),
+            str(doc.get("answer_hint", "")),
+            str(doc.get("context", "")),
+        ]).lower()
+
+        if entities and any(e in text for e in entities):
+            hint = str(doc.get("answer_hint", "")).strip()
+            if hint:
+                return hint
+
     return str(docs[0].get("answer_hint", "")).strip()
 
 
 def generate_when_answer(docs: List[Dict]) -> str:
-    # strongly prefer timing/week records
     for doc in docs:
         subtopic = str(doc.get("subtopic", "")).lower()
         hint = str(doc.get("answer_hint", "")).strip()
         if any(x in subtopic for x in ["timing", "week", "schedule"]) and hint:
             return hint
-
     return str(docs[0].get("answer_hint", "")).strip()
 
 
@@ -189,7 +241,6 @@ def generate_weight_answer(docs: List[Dict]) -> str:
         hint = str(doc.get("answer_hint", "")).strip()
         if any(x in subtopic for x in ["weight", "weights", "grading"]) and hint:
             return hint
-
     return str(docs[0].get("answer_hint", "")).strip()
 
 
@@ -217,7 +268,7 @@ def generate_default_answer(docs: List[Dict]) -> str:
 
 def build_prompt(query: str, retrieved_docs: List[Dict]) -> str:
     """
-    Kept for compatibility / documentation, not required by the current generator.
+    Kept for compatibility / documentation, not used by the current generator.
     """
     context_block = ""
 
@@ -245,8 +296,8 @@ def generate_answer(query: str, retrieved_docs: List[Dict]) -> str:
     Query-aware grounded answer selection.
 
     This module:
-    - detects the query type
-    - reranks retrieved documents
+    - detects query type
+    - reranks retrieved documents with entity-aware scoring
     - selects the most appropriate answer style
     - keeps the response grounded in retrieved evidence
     """
@@ -259,7 +310,7 @@ def generate_answer(query: str, retrieved_docs: List[Dict]) -> str:
     if query_type == "overview":
         answer = generate_overview_answer(docs)
     elif query_type == "existence":
-        answer = generate_existence_answer(docs)
+        answer = generate_existence_answer(docs, query)
     elif query_type == "when":
         answer = generate_when_answer(docs)
     elif query_type == "weight":
