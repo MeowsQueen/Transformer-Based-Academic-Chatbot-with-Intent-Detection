@@ -20,6 +20,7 @@ from src.preprocess import clean_text
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 KB_PATH = BASE_DIR / "data" / "processed" / "knowledge_base.csv"
+EMBEDDINGS_PATH = BASE_DIR / "models" / "kb_embeddings.npy"
 MODEL_NAME = "all-MiniLM-L6-v2"
 
 
@@ -66,8 +67,11 @@ INTENT_TOPIC_MAP = {
 
 
 class Retriever:
-    def __init__(self, kb_path=KB_PATH, model_name=MODEL_NAME):
-        self.kb = pd.read_csv(kb_path).copy()
+    def __init__(self, kb_path=KB_PATH, model_name=MODEL_NAME, embeddings_path=EMBEDDINGS_PATH):
+        self.kb_path = Path(kb_path)
+        self.embeddings_path = Path(embeddings_path)
+
+        self.kb = pd.read_csv(self.kb_path).copy()
 
         for col in ["question_variation", "context", "answer_hint", "topic", "subtopic"]:
             if col not in self.kb.columns:
@@ -86,11 +90,16 @@ class Retriever:
         ).apply(clean_text)
 
         self.model = SentenceTransformer(model_name)
+        self.embeddings_path.parent.mkdir(parents=True, exist_ok=True)
 
-        self.embeddings = self.model.encode(
-            self.kb["retrieval_text"].tolist(),
-            show_progress_bar=False
-        )
+        if self.embeddings_path.exists():
+            self.embeddings = np.load(self.embeddings_path)
+        else:
+            self.embeddings = self.model.encode(
+                self.kb["retrieval_text"].tolist(),
+                show_progress_bar=False
+            )
+            np.save(self.embeddings_path, self.embeddings)
 
     def _filter_by_intent(self, predicted_intent: Optional[str]) -> pd.DataFrame:
         if not predicted_intent or predicted_intent not in INTENT_TOPIC_MAP:
@@ -109,7 +118,6 @@ class Retriever:
 
         filtered_kb = self._filter_by_intent(predicted_intent)
         filtered_indices = filtered_kb.index.tolist()
-
         filtered_embeddings = self.embeddings[filtered_indices]
 
         query_emb = self.model.encode([query])
