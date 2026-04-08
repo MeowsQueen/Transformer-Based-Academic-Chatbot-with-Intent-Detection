@@ -9,7 +9,6 @@ Original file is located at
 
 from pathlib import Path
 from typing import List, Optional
-import re
 
 import numpy as np
 import pandas as pd
@@ -23,35 +22,6 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 KB_PATH = BASE_DIR / "data" / "processed" / "knowledge_base.csv"
 EMBEDDINGS_PATH = BASE_DIR / "models" / "kb_embeddings.npy"
 MODEL_NAME = "BAAI/bge-base-en-v1.5"
-
-
-def tokenize_for_match(text: str):
-    return re.findall(r"[a-zA-Z0-9_]+", str(text).lower())
-
-
-def lexical_bonus(query: str, row) -> float:
-    query_tokens = set(tokenize_for_match(query))
-
-    row_text = " ".join([
-        str(row.get("topic", "")),
-        str(row.get("subtopic", "")),
-        str(row.get("question_variation", "")),
-        str(row.get("answer_hint", "")),
-    ]).lower()
-
-    row_tokens = set(tokenize_for_match(row_text))
-
-    bonus = 0.0
-
-    # exact token overlap
-    overlap = query_tokens.intersection(row_tokens)
-    bonus += min(len(overlap) * 0.08, 0.24)
-
-    # stronger bonus for short queries like "llm", "mllm", "rag"
-    if len(query_tokens) <= 2 and overlap:
-        bonus += 0.15
-
-    return bonus
 
 
 class Retriever:
@@ -71,11 +41,10 @@ class Retriever:
         self.kb["topic"] = self.kb["topic"].fillna("").astype(str)
         self.kb["subtopic"] = self.kb["subtopic"].fillna("").astype(str)
 
-        # richer retrieval representation
         self.kb["retrieval_text"] = (
             self.kb["question_variation"] + " " +
             self.kb["question_variation"] + " " +
-            self.kb["question_variation"] + " " +   # boost question form
+            self.kb["question_variation"] + " " +
             self.kb["subtopic"] + " " +
             self.kb["answer_hint"] + " " +
             self.kb["context"]
@@ -87,7 +56,6 @@ class Retriever:
         if self.embeddings_path.exists():
             self.embeddings = np.load(self.embeddings_path)
 
-            # if KB changed, rebuild cache
             if len(self.embeddings) != len(self.kb):
                 self.embeddings = self.model.encode(
                     self.kb["retrieval_text"].tolist(),
@@ -105,21 +73,15 @@ class Retriever:
         query = clean_text(query)
 
         query_emb = self.model.encode([query])
-        semantic_scores = cosine_similarity(query_emb, self.embeddings)[0]
+        scores = cosine_similarity(query_emb, self.embeddings)[0]
 
-        final_scores = []
-        for idx, row in self.kb.iterrows():
-            bonus = lexical_bonus(query, row)
-            final_scores.append(float(semantic_scores[idx]) + bonus)
-
-        final_scores = np.array(final_scores)
-        top_idx = np.argsort(final_scores)[::-1][:top_k]
+        top_idx = np.argsort(scores)[::-1][:top_k]
 
         results = []
         for idx in top_idx:
             row = self.kb.iloc[idx]
             results.append({
-                "score": float(final_scores[idx]),
+                "score": float(scores[idx]),
                 "doc_id": row.get("doc_id", ""),
                 "topic": row.get("topic", ""),
                 "subtopic": row.get("subtopic", ""),
