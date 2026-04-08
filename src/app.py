@@ -17,7 +17,9 @@ import os
 
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
-from src.chatbot import Chatbot
+BASE_DIR = Path(__file__).resolve().parent.parent
+CONF_MATRIX_PATH = BASE_DIR / "results" / "confusion_matrix.png"
+METRICS_PATH = BASE_DIR / "results" / "metrics.txt"
 
 
 st.set_page_config(
@@ -31,96 +33,98 @@ st.set_page_config(
 st.markdown("""
 <style>
 .block-container {
-    padding-top: 1.5rem;
+    max-width: 1600px;
+    padding-top: 1.2rem;
     padding-bottom: 1.5rem;
-    max-width: 1500px;
 }
 
-.hero-card {
-    background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+/* Use theme-aware colors instead of hardcoded white backgrounds */
+.card {
+    background: color-mix(in srgb, var(--background-color, #0e1117) 92%, white 8%);
+    border: 1px solid rgba(128,128,128,0.22);
+    border-radius: 20px;
+    padding: 1rem 1rem 0.9rem 1rem;
+    box-shadow: 0 6px 18px rgba(0,0,0,0.08);
+}
+
+.hero {
+    background: linear-gradient(135deg, rgba(37,99,235,0.16), rgba(14,165,233,0.10));
+    border: 1px solid rgba(96,165,250,0.28);
     border-radius: 24px;
-    padding: 1.5rem 1.5rem 1.25rem 1.5rem;
-    color: white;
-    border: 1px solid rgba(255,255,255,0.08);
-    box-shadow: 0 10px 30px rgba(15, 23, 42, 0.25);
+    padding: 1.2rem 1.2rem 1rem 1.2rem;
     margin-bottom: 1rem;
 }
 
-.hero-subtle {
-    color: rgba(255,255,255,0.80);
-    font-size: 0.98rem;
-}
-
 .metric-card {
-    background: #ffffff;
-    border: 1px solid rgba(15, 23, 42, 0.08);
-    border-radius: 20px;
-    padding: 1rem 1rem 0.85rem 1rem;
-    box-shadow: 0 6px 20px rgba(15, 23, 42, 0.05);
-    min-height: 108px;
+    background: color-mix(in srgb, var(--background-color, #0e1117) 90%, white 10%);
+    border: 1px solid rgba(128,128,128,0.22);
+    border-radius: 18px;
+    padding: 0.9rem 1rem;
+    min-height: 100px;
 }
 
 .metric-label {
-    color: #64748b;
     font-size: 0.82rem;
-    margin-bottom: 0.35rem;
+    opacity: 0.75;
+    margin-bottom: 0.2rem;
 }
 
 .metric-value {
-    color: #0f172a;
-    font-size: 1.4rem;
+    font-size: 1.35rem;
     font-weight: 700;
     line-height: 1.2;
-}
-
-.panel-card {
-    background: #ffffff;
-    border: 1px solid rgba(15, 23, 42, 0.08);
-    border-radius: 22px;
-    padding: 1rem 1rem 0.5rem 1rem;
-    box-shadow: 0 6px 20px rgba(15, 23, 42, 0.05);
 }
 
 .section-title {
     font-size: 1.02rem;
     font-weight: 700;
-    color: #0f172a;
     margin-bottom: 0.75rem;
 }
 
 .soft-label {
-    font-size: 0.85rem;
-    color: #64748b;
+    font-size: 0.83rem;
+    opacity: 0.75;
     margin-bottom: 0.25rem;
 }
 
-.status-pill {
-    display: inline-block;
-    padding: 0.35rem 0.7rem;
-    border-radius: 999px;
-    font-size: 0.82rem;
-    font-weight: 600;
-    border: 1px solid rgba(15, 23, 42, 0.08);
-    background: #f8fafc;
-    color: #0f172a;
-}
-
 .answer-box {
-    background: #f8fafc;
-    border: 1px solid rgba(15, 23, 42, 0.08);
-    border-radius: 18px;
-    padding: 0.9rem 1rem;
-    margin-top: 0.4rem;
+    border: 1px solid rgba(128,128,128,0.22);
+    border-radius: 16px;
+    padding: 0.8rem 0.9rem;
+    background: color-mix(in srgb, var(--background-color, #0e1117) 94%, white 6%);
 }
 
 .small-note {
-    color: #64748b;
+    opacity: 0.72;
     font-size: 0.82rem;
 }
 
-hr.custom-divider {
+.pill {
+    display: inline-block;
+    padding: 0.28rem 0.62rem;
+    border-radius: 999px;
+    border: 1px solid rgba(128,128,128,0.22);
+    font-size: 0.78rem;
+    font-weight: 600;
+    margin-right: 0.35rem;
+    margin-top: 0.35rem;
+}
+
+.chat-shell {
+    min-height: 720px;
+}
+
+div[data-testid="stChatMessage"] {
+    border-radius: 18px;
+}
+
+[data-testid="stSidebar"] .stButton button {
+    text-align: left;
+}
+
+hr.soft {
     border: none;
-    border-top: 1px solid rgba(15, 23, 42, 0.08);
+    border-top: 1px solid rgba(128,128,128,0.18);
     margin: 0.8rem 0 1rem 0;
 }
 </style>
@@ -153,8 +157,10 @@ if "last_result" not in st.session_state:
     st.session_state.last_result = None
 
 
-# ---------- Helper functions ----------
+# ---------- Helpers ----------
 def classify_status(result: dict) -> str:
+    if not result:
+        return "Ready"
     if result["intent"] == "oos":
         return "Out of scope"
     if "not confident" in result["response"].lower():
@@ -163,7 +169,7 @@ def classify_status(result: dict) -> str:
 
 
 def top_score(result: dict):
-    docs = result.get("retrieved_docs")
+    docs = result.get("retrieved_docs") if result else None
     if docs and len(docs) > 0:
         return docs[0]["score"]
     return None
@@ -184,11 +190,11 @@ def render_metric_card(label: str, value: str):
 def run_query(query: str):
     with st.status("Running pipeline...", expanded=True) as status:
         st.write("1. Intent classification")
-        time.sleep(0.15)
+        time.sleep(0.10)
         result = bot.respond(query)
 
         st.write("2. Semantic retrieval")
-        time.sleep(0.15)
+        time.sleep(0.10)
 
         if result.get("retrieved_docs"):
             st.write("3. Grounded response construction")
@@ -211,18 +217,25 @@ def push_message(role, content, query=None, intent=None, retrieved_docs=None, st
     })
 
 
+def load_metrics_table():
+    return pd.DataFrame({
+        "Metric": ["Validation Accuracy", "Test Accuracy", "Macro F1", "OOS Recall"],
+        "Value": ["0.9357", "0.8857", "0.8820", "0.6000"]
+    })
+
+
 # ---------- Sidebar ----------
 with st.sidebar:
     st.title("Demo Controls")
-    st.caption("Transformer-Based Academic Chatbot")
+    st.caption("Academic Chatbot")
 
     st.markdown("### Suggested queries")
     quick_queries = [
         "What is a transformer?",
         "Who is the instructor?",
         "How is the course graded?",
-        "Is there a project in this course?",
         "What topics are covered in the course?",
+        "Is there a project in this course?",
         "Tell me a joke",
     ]
 
@@ -242,18 +255,11 @@ with st.sidebar:
             st.rerun()
 
     st.markdown("---")
-    st.markdown("### System snapshot")
+    st.markdown("### System")
     st.write("**Intent model:** TF-IDF + Logistic Regression")
-    st.write("**Retriever:** Sentence-Transformers + cosine similarity")
+    st.write("**Retriever:** Sentence Transformers + cosine similarity")
     st.write("**Generator:** Lightweight grounded response layer")
-    st.write("**Knowledge base:** Academic/course-specific corpus")
-
-    st.markdown("### Evaluation snapshot")
-    eval_df = pd.DataFrame({
-        "Metric": ["Validation Accuracy", "Test Accuracy", "Macro F1", "OOS Recall"],
-        "Value": ["0.9357", "0.8857", "0.8820", "0.6000"]
-    })
-    st.dataframe(eval_df, use_container_width=True, hide_index=True)
+    st.write("**Corpus:** Course + NLP/LLM knowledge base")
 
     if st.button("Clear conversation", use_container_width=True):
         st.session_state.messages = [st.session_state.messages[0]]
@@ -263,25 +269,22 @@ with st.sidebar:
 
 # ---------- Header ----------
 st.markdown("""
-<div class="hero-card">
-    <div style="display:flex; justify-content:space-between; gap:1.2rem; flex-wrap:wrap;">
-        <div style="flex:2; min-width: 320px;">
-            <div style="font-size:2rem; font-weight:800; line-height:1.15;">
-                🎓 Academic Chatbot Demo
+<div class="hero">
+    <div style="display:flex; justify-content:space-between; gap:1rem; flex-wrap:wrap;">
+        <div style="flex:2; min-width:320px;">
+            <div style="font-size:1.95rem; font-weight:800; line-height:1.1;">
+                🎓 Transformer-Based Academic Chatbot
             </div>
-            <div class="hero-subtle" style="margin-top:0.5rem;">
-                A hybrid NLP system that combines intent classification, semantic retrieval,
-                and grounded response generation for academic question answering.
+            <div style="margin-top:0.45rem; opacity:0.82;">
+                Hybrid NLP pipeline for intent classification, semantic retrieval, and grounded academic response generation.
             </div>
         </div>
-        <div style="flex:1; min-width: 260px;">
-            <div style="background: rgba(255,255,255,0.06); border:1px solid rgba(255,255,255,0.08); border-radius:18px; padding:0.9rem 1rem;">
-                <div style="font-size:0.8rem; opacity:0.8;">Pipeline</div>
-                <div style="font-size:1rem; font-weight:700; margin-top:0.35rem;">
-                    Query → Intent → Retrieval → Response
-                </div>
-                <div class="hero-subtle" style="margin-top:0.5rem;">
-                    Explainable by design: retrieved evidence and scores are shown alongside answers.
+        <div style="flex:1; min-width:260px;">
+            <div class="answer-box">
+                <div class="soft-label">Pipeline</div>
+                <div style="font-weight:700;">Query → Intent → Retrieval → Response</div>
+                <div class="small-note" style="margin-top:0.4rem;">
+                    Retrieved evidence, confidence, and evaluation artifacts are visible in the right panel.
                 </div>
             </div>
         </div>
@@ -292,26 +295,26 @@ st.markdown("""
 
 # ---------- Top metrics ----------
 result = st.session_state.last_result
-top_intent = result["intent"] if result else "—"
-top_score_value = f"{top_score(result):.3f}" if result and top_score(result) is not None else "—"
-status_text = classify_status(result) if result else "Ready"
+intent_value = result["intent"] if result else "—"
+score_value = f"{top_score(result):.3f}" if result and top_score(result) is not None else "—"
+status_value = classify_status(result)
 
 m1, m2, m3 = st.columns(3)
 with m1:
-    render_metric_card("Predicted Intent", top_intent)
+    render_metric_card("Predicted Intent", intent_value)
 with m2:
-    render_metric_card("Top Retrieval Score", top_score_value)
+    render_metric_card("Top Retrieval Score", score_value)
 with m3:
-    render_metric_card("Answer Status", status_text)
+    render_metric_card("Answer Status", status_value)
 
-st.markdown("<div style='height: 0.7rem;'></div>", unsafe_allow_html=True)
+st.markdown("<div style='height:0.7rem;'></div>", unsafe_allow_html=True)
 
 
 # ---------- Main layout ----------
-left_col, right_col = st.columns([1.55, 1.0], gap="large")
+left_col, right_col = st.columns([1.7, 1.05], gap="large")
 
 with left_col:
-    st.markdown('<div class="panel-card">', unsafe_allow_html=True)
+    st.markdown('<div class="card chat-shell">', unsafe_allow_html=True)
     st.markdown('<div class="section-title">Conversation</div>', unsafe_allow_html=True)
 
     for msg in st.session_state.messages:
@@ -321,10 +324,8 @@ with left_col:
             if msg["role"] == "assistant" and msg.get("intent"):
                 st.markdown(
                     f"""
-                    <div style="margin-top:0.5rem;">
-                        <span class="status-pill">Intent: {msg['intent']}</span>
-                        <span class="status-pill" style="margin-left:0.35rem;">Status: {msg.get('status', 'ready')}</span>
-                    </div>
+                    <span class="pill">Intent: {msg['intent']}</span>
+                    <span class="pill">Status: {msg.get('status', 'ready')}</span>
                     """,
                     unsafe_allow_html=True,
                 )
@@ -348,21 +349,22 @@ with left_col:
     st.markdown("</div>", unsafe_allow_html=True)
 
 with right_col:
-    st.markdown('<div class="panel-card">', unsafe_allow_html=True)
+    # Why this answer
+    st.markdown('<div class="card">', unsafe_allow_html=True)
     st.markdown('<div class="section-title">Why this answer?</div>', unsafe_allow_html=True)
 
     if not result:
-        st.info("Ask a question to inspect the model’s reasoning trail, retrieved evidence, and confidence signals.")
+        st.info("Ask a question to inspect intent, confidence, retrieved evidence, and evaluation artifacts.")
     else:
         score = top_score(result)
         status_now = classify_status(result)
 
-        info_1, info_2 = st.columns(2)
-        with info_1:
+        a, b = st.columns(2)
+        with a:
             st.markdown('<div class="soft-label">Predicted intent</div>', unsafe_allow_html=True)
             st.markdown(f"<div class='answer-box'>{result['intent']}</div>", unsafe_allow_html=True)
-        with info_2:
-            st.markdown('<div class="soft-label">System status</div>', unsafe_allow_html=True)
+        with b:
+            st.markdown('<div class="soft-label">Status</div>', unsafe_allow_html=True)
             st.markdown(f"<div class='answer-box'>{status_now}</div>", unsafe_allow_html=True)
 
         st.markdown('<div class="soft-label" style="margin-top:0.8rem;">Final answer</div>', unsafe_allow_html=True)
@@ -375,7 +377,7 @@ with right_col:
 
         docs = result.get("retrieved_docs")
         if docs:
-            st.markdown("<hr class='custom-divider'>", unsafe_allow_html=True)
+            st.markdown("<hr class='soft'>", unsafe_allow_html=True)
             st.markdown('<div class="section-title">Retrieved evidence</div>', unsafe_allow_html=True)
 
             evidence_df = pd.DataFrame([
@@ -390,19 +392,41 @@ with right_col:
             st.dataframe(evidence_df, use_container_width=True, hide_index=True)
 
             for i, d in enumerate(docs, start=1):
-                with st.expander(f"Document {i} · {d['topic']} · score {d['score']:.4f}", expanded=(i == 1)):
+                with st.expander(f"Document {i} · {d['topic']} · {d['score']:.4f}", expanded=(i == 1)):
                     st.markdown(f"**Subtopic:** {d['subtopic']}")
                     st.markdown(f"**Question variation:** {d['question_variation']}")
                     st.markdown(f"**Answer hint:** {d['answer_hint']}")
                     st.markdown(f"**Context:** {d['context']}")
 
-        st.markdown("<hr class='custom-divider'>", unsafe_allow_html=True)
+        st.markdown("<hr class='soft'>", unsafe_allow_html=True)
         st.markdown('<div class="section-title">Interpretation</div>', unsafe_allow_html=True)
+
         if status_now == "Out of scope":
             st.warning("The query was classified as outside the supported academic scope.")
         elif status_now == "Low confidence":
-            st.warning("The query appears academic, but retrieval confidence is not strong enough to support a reliable answer.")
+            st.warning("The query looks relevant, but retrieval confidence is not high enough for a reliable grounded answer.")
         else:
-            st.success("The answer is grounded in the retrieved knowledge base and passed the retrieval confidence threshold.")
+            st.success("The response is grounded in retrieved course knowledge and passed the confidence threshold.")
+
+    st.markdown("</div>", unsafe_allow_html=True)
+
+    st.markdown("<div style='height:0.8rem;'></div>", unsafe_allow_html=True)
+
+    # Evaluation panel
+    st.markdown('<div class="card">', unsafe_allow_html=True)
+    st.markdown('<div class="section-title">Evaluation snapshot</div>', unsafe_allow_html=True)
+
+    st.dataframe(load_metrics_table(), use_container_width=True, hide_index=True)
+
+    if CONF_MATRIX_PATH.exists():
+        st.markdown('<div class="soft-label" style="margin-top:0.8rem;">Confusion matrix</div>', unsafe_allow_html=True)
+        st.image(str(CONF_MATRIX_PATH), use_container_width=True)
+    else:
+        st.info("Confusion matrix image not found in results/.")
+
+    if METRICS_PATH.exists():
+        with st.expander("Open raw metrics.txt"):
+            with open(METRICS_PATH, "r", encoding="utf-8") as f:
+                st.text(f.read())
 
     st.markdown("</div>", unsafe_allow_html=True)
