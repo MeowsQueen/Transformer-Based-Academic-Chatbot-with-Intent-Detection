@@ -24,48 +24,6 @@ EMBEDDINGS_PATH = BASE_DIR / "models" / "kb_embeddings.npy"
 MODEL_NAME = "all-MiniLM-L6-v2"
 
 
-INTENT_TOPIC_MAP = {
-    "concept_query": [
-        "nlp_basics",
-        "transformers",
-        "bert",
-        "embeddings",
-        "attention",
-        "rag",
-        "fine_tuning",
-        "vector_database",
-        "course_content",
-    ],
-    "schedule_query": [
-        "schedule",
-        "exam",
-        "grading",
-        "project",
-        "course_content",
-    ],
-    "scheduling_action": [
-        "schedule",
-        "project",
-        "exam",
-        "course_content",
-    ],
-    "agent_identity": [
-        "instructor",
-        "course_content",
-    ],
-    "task_management": [
-        "project",
-        "exam",
-        "course_content",
-        "schedule",
-    ],
-    "language_assistance": [
-        "nlp_basics",
-        "course_content",
-    ],
-}
-
-
 class Retriever:
     def __init__(self, kb_path=KB_PATH, model_name=MODEL_NAME, embeddings_path=EMBEDDINGS_PATH):
         self.kb_path = Path(kb_path)
@@ -83,10 +41,13 @@ class Retriever:
         self.kb["topic"] = self.kb["topic"].fillna("").astype(str)
         self.kb["subtopic"] = self.kb["subtopic"].fillna("").astype(str)
 
+        # richer retrieval representation
         self.kb["retrieval_text"] = (
+            self.kb["topic"] + " " +
+            self.kb["subtopic"] + " " +
             self.kb["question_variation"] + " " +
-            self.kb["context"] + " " +
-            self.kb["answer_hint"]
+            self.kb["answer_hint"] + " " +
+            self.kb["context"]
         ).apply(clean_text)
 
         self.model = SentenceTransformer(model_name)
@@ -94,6 +55,14 @@ class Retriever:
 
         if self.embeddings_path.exists():
             self.embeddings = np.load(self.embeddings_path)
+
+            # if KB changed, rebuild cache
+            if len(self.embeddings) != len(self.kb):
+                self.embeddings = self.model.encode(
+                    self.kb["retrieval_text"].tolist(),
+                    show_progress_bar=False
+                )
+                np.save(self.embeddings_path, self.embeddings)
         else:
             self.embeddings = self.model.encode(
                 self.kb["retrieval_text"].tolist(),
@@ -101,37 +70,19 @@ class Retriever:
             )
             np.save(self.embeddings_path, self.embeddings)
 
-    def _filter_by_intent(self, predicted_intent: Optional[str]) -> pd.DataFrame:
-        if not predicted_intent or predicted_intent not in INTENT_TOPIC_MAP:
-            return self.kb
-
-        allowed_topics = INTENT_TOPIC_MAP[predicted_intent]
-        filtered = self.kb[self.kb["topic"].isin(allowed_topics)].copy()
-
-        if filtered.empty:
-            return self.kb
-
-        return filtered
-
     def retrieve(self, query: str, top_k: int = 3, predicted_intent: Optional[str] = None) -> List[dict]:
         query = clean_text(query)
 
-        filtered_kb = self._filter_by_intent(predicted_intent)
-        filtered_indices = filtered_kb.index.tolist()
-        filtered_embeddings = self.embeddings[filtered_indices]
-
         query_emb = self.model.encode([query])
-        scores = cosine_similarity(query_emb, filtered_embeddings)[0]
+        scores = cosine_similarity(query_emb, self.embeddings)[0]
 
-        top_local_idx = np.argsort(scores)[::-1][:top_k]
+        top_idx = np.argsort(scores)[::-1][:top_k]
 
         results = []
-        for local_idx in top_local_idx:
-            global_idx = filtered_indices[local_idx]
-            row = self.kb.iloc[global_idx]
-
+        for idx in top_idx:
+            row = self.kb.iloc[idx]
             results.append({
-                "score": float(scores[local_idx]),
+                "score": float(scores[idx]),
                 "doc_id": row.get("doc_id", ""),
                 "topic": row.get("topic", ""),
                 "subtopic": row.get("subtopic", ""),
