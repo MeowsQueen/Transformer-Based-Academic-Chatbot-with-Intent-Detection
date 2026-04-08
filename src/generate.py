@@ -176,28 +176,72 @@ def generate_overview_answer(docs: List[Dict]) -> str:
 def generate_existence_answer(docs: List[Dict], query: str) -> str:
     q = query.lower()
 
-    keywords = ["project", "exam", "assignment"]
+    target_keywords = ["project", "exam", "assignment"]
 
-    for k in keywords:
+    matched_keyword = None
+    for k in target_keywords:
         if k in q:
-            for doc in docs:
-                text = " ".join([
-                    str(doc.get("topic", "")),
-                    str(doc.get("subtopic", "")),
-                    str(doc.get("question_variation", "")),
-                    str(doc.get("answer_hint", "")),
-                ]).lower()
+            matched_keyword = k
+            break
 
-                if k in text:
-                    hint = str(doc.get("answer_hint", "")).strip()
-                    if hint:
-                        return hint
+    if matched_keyword is None:
+        for doc in docs:
+            hint = str(doc.get("answer_hint", "")).strip()
+            if hint:
+                return hint
+        return str(docs[0].get("answer_hint", "")).strip()
 
+    # 1. Best case: explicit existence / course relation style question variation
     for doc in docs:
-        hint = str(doc.get("answer_hint", "")).strip()
-        if hint:
-            return hint
+        qv = str(doc.get("question_variation", "")).lower()
+        subtopic = str(doc.get("subtopic", "")).lower()
+        text = " ".join([
+            str(doc.get("topic", "")),
+            subtopic,
+            qv,
+            str(doc.get("answer_hint", "")),
+            str(doc.get("context", "")),
+        ]).lower()
 
+        if matched_keyword in text:
+            if any(x in qv for x in [
+                "is there", "does the course have", "does the course include", "is there a"
+            ]):
+                return str(doc.get("answer_hint", "")).strip()
+
+            if any(x in subtopic for x in [
+                "course_relation", "existence", "project_presence", "llm_presence"
+            ]):
+                return str(doc.get("answer_hint", "")).strip()
+
+    # 2. Second best: entity-matching doc that explicitly says yes/has/includes
+    for doc in docs:
+        text = " ".join([
+            str(doc.get("topic", "")),
+            str(doc.get("subtopic", "")),
+            str(doc.get("question_variation", "")),
+            str(doc.get("answer_hint", "")),
+            str(doc.get("context", "")),
+        ]).lower()
+
+        if matched_keyword in text and any(x in text for x in ["yes", "includes", "has a", "has an"]):
+            return str(doc.get("answer_hint", "")).strip()
+
+    # 3. Third best: entity-matching doc, but avoid generic learning outcomes/objectives
+    for doc in docs:
+        subtopic = str(doc.get("subtopic", "")).lower()
+        text = " ".join([
+            str(doc.get("topic", "")),
+            subtopic,
+            str(doc.get("question_variation", "")),
+            str(doc.get("answer_hint", "")),
+            str(doc.get("context", "")),
+        ]).lower()
+
+        if matched_keyword in text and not any(x in subtopic for x in ["learning_outcomes", "objectives", "overview"]):
+            return str(doc.get("answer_hint", "")).strip()
+
+    # fallback
     return str(docs[0].get("answer_hint", "")).strip()
 
 
