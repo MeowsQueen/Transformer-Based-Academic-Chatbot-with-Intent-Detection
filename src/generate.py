@@ -76,7 +76,7 @@ def detect_query_type(query: str) -> str:
     return "default"
 
 
-def score_doc_for_generation(doc: Dict, query_type: str) -> float:
+def score_doc_for_generation(doc: Dict, query: str, query_type: str) -> float:
     score = float(doc.get("score", 0.0))
     topic = str(doc.get("topic", "")).lower()
     subtopic = str(doc.get("subtopic", "")).lower()
@@ -85,6 +85,25 @@ def score_doc_for_generation(doc: Dict, query_type: str) -> float:
     context = str(doc.get("context", "")).lower()
 
     text = " ".join([topic, subtopic, qv, hint, context])
+    q = query.lower()
+
+    # lightweight lexical grounding
+    key_terms = [
+        "transformer", "transformers", "rnn", "rnns",
+        "bert", "rag", "llm", "mllm",
+        "tokenization", "tokenizer", "token", "tokens",
+        "embedding", "embeddings",
+        "project", "exam", "assignment",
+        "vector database", "fine tuning"
+    ]
+
+    matched_terms = [term for term in key_terms if term in q]
+
+    if matched_terms:
+        if any(term in text for term in matched_terms):
+            score += 0.35
+        else:
+            score -= 0.20
 
     # overview questions should strongly prefer overview-like records
     if query_type == "overview":
@@ -125,7 +144,7 @@ def score_doc_for_generation(doc: Dict, query_type: str) -> float:
 
     # why questions
     elif query_type == "why":
-        if any(x in text for x in ["because", "important", "helps", "used for", "matters", "affects"]):
+        if any(x in text for x in ["because", "important", "helps", "used for", "matters", "affects", "better", "advantage"]):
             score += 0.25
 
     # who questions
@@ -146,7 +165,7 @@ def rerank_docs_for_generation(query: str, docs: List[Dict]) -> List[Dict]:
 
     rescored = []
     for doc in docs:
-        rescored.append((score_doc_for_generation(doc, query_type), doc))
+        rescored.append((score_doc_for_generation(doc, query, query_type), doc))
 
     rescored.sort(key=lambda x: x[0], reverse=True)
     return [doc for _, doc in rescored]
@@ -280,29 +299,13 @@ def generate_comparison_answer(docs: List[Dict]) -> str:
 
 def generate_why_answer(docs: List[Dict]) -> str:
     """
-    Safer handling for 'why' questions:
-    - prefer a single focused explanation
-    - avoid concatenating unrelated hints
+    For why-questions, return one focused explanation only.
+    This avoids mixing unrelated hints.
     """
-    for doc in docs:
-        subtopic = str(doc.get("subtopic", "")).lower()
-        qv = str(doc.get("question_variation", "")).lower()
-        hint = str(doc.get("answer_hint", "")).strip()
-        context = str(doc.get("context", "")).lower()
-
-        text = " ".join([subtopic, qv, context])
-
-        if hint and any(x in text for x in [
-            "why", "important", "better", "used", "matters", "helps", "because", "advantage"
-        ]):
-            return hint
-
-    # fallback: first non-empty hint only
     for doc in docs:
         hint = str(doc.get("answer_hint", "")).strip()
         if hint:
             return hint
-
     return ""
 
 
