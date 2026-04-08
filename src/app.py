@@ -11,7 +11,6 @@ from pathlib import Path
 import time
 import streamlit as st
 import pandas as pd
-
 import sys
 import os
 
@@ -21,7 +20,6 @@ from src.chatbot import Chatbot
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 CONF_MATRIX_PATH = BASE_DIR / "results" / "confusion_matrix.png"
-
 
 st.set_page_config(
     page_title="Academic Chatbot Demo",
@@ -34,56 +32,57 @@ st.set_page_config(
 st.markdown("""
 <style>
 .block-container {
-    max-width: 1580px;
+    max-width: 1560px;
     padding-top: 1.15rem;
     padding-bottom: 1.4rem;
 }
 
+/* Main palette */
 .hero {
-    background: linear-gradient(135deg, rgba(37,99,235,0.18), rgba(14,165,233,0.10));
-    border: 1px solid rgba(96,165,250,0.22);
+    background: linear-gradient(135deg, rgba(59,130,246,0.10), rgba(14,165,233,0.06));
+    border: 1px solid rgba(148, 163, 184, 0.22);
     border-radius: 24px;
-    padding: 1.2rem 1.2rem 1rem 1.2rem;
+    padding: 1.15rem 1.2rem 1rem 1.2rem;
     margin-bottom: 1rem;
 }
 
 .metric-card {
-    background: rgba(30, 41, 59, 0.72);
-    border: 1px solid rgba(148, 163, 184, 0.16);
+    background: rgba(100, 116, 139, 0.10);
+    border: 1px solid rgba(148, 163, 184, 0.20);
     border-radius: 18px;
-    padding: 0.9rem 1rem;
+    padding: 0.95rem 1rem;
     min-height: 96px;
 }
 
 .metric-label {
     font-size: 0.82rem;
-    opacity: 0.78;
-    margin-bottom: 0.25rem;
+    opacity: 0.72;
+    margin-bottom: 0.22rem;
 }
 
 .metric-value {
-    font-size: 1.35rem;
+    font-size: 1.32rem;
     font-weight: 700;
     line-height: 1.2;
 }
 
 .section-title {
-    font-size: 1.02rem;
+    font-size: 1.03rem;
     font-weight: 700;
     margin-bottom: 0.75rem;
 }
 
 .soft-label {
     font-size: 0.83rem;
-    opacity: 0.78;
+    opacity: 0.74;
     margin-bottom: 0.25rem;
 }
 
 .answer-box {
-    border: 1px solid rgba(148, 163, 184, 0.16);
+    border: 1px solid rgba(148, 163, 184, 0.18);
     border-radius: 16px;
     padding: 0.8rem 0.9rem;
-    background: rgba(15, 23, 42, 0.42);
+    background: rgba(100, 116, 139, 0.08);
 }
 
 .small-note {
@@ -95,33 +94,82 @@ st.markdown("""
     display: inline-block;
     padding: 0.28rem 0.62rem;
     border-radius: 999px;
-    border: 1px solid rgba(148, 163, 184, 0.16);
+    border: 1px solid rgba(148, 163, 184, 0.18);
     font-size: 0.78rem;
     font-weight: 600;
     margin-right: 0.35rem;
     margin-top: 0.35rem;
-    background: rgba(15, 23, 42, 0.34);
-}
-
-.chat-shell {
-    min-height: auto;
+    background: rgba(100, 116, 139, 0.08);
 }
 
 .empty-panel {
-    border: 1px dashed rgba(148, 163, 184, 0.18);
+    border: 1px dashed rgba(148, 163, 184, 0.22);
     border-radius: 18px;
     padding: 1rem;
-    background: rgba(15, 23, 42, 0.28);
+    background: rgba(100, 116, 139, 0.06);
 }
 
+.chat-panel {
+    border: 1px solid rgba(148, 163, 184, 0.20);
+    border-radius: 24px;
+    background: rgba(100, 116, 139, 0.06);
+    padding: 1rem 1rem 0.8rem 1rem;
+    min-height: 680px;
+}
+
+.side-panel {
+    border: 1px solid rgba(148, 163, 184, 0.20);
+    border-radius: 24px;
+    background: rgba(100, 116, 139, 0.06);
+    padding: 1rem;
+}
+
+.eval-panel {
+    border: 1px solid rgba(148, 163, 184, 0.20);
+    border-radius: 24px;
+    background: rgba(100, 116, 139, 0.06);
+    padding: 1rem;
+}
+
+/* Streamlit internals */
 div[data-testid="stChatMessage"] {
     border-radius: 18px;
+    padding: 0.08rem 0;
+}
+
+div[data-testid="stDataFrame"] {
+    border-radius: 16px;
+    overflow: hidden;
+}
+
+div[data-testid="stChatInput"] {
+    margin-top: 0.7rem;
 }
 
 hr.soft {
     border: none;
-    border-top: 1px solid rgba(148, 163, 184, 0.14);
+    border-top: 1px solid rgba(148, 163, 184, 0.16);
     margin: 0.8rem 0 1rem 0;
+}
+
+/* Sidebar polish */
+[data-testid="stSidebar"] {
+    border-right: 1px solid rgba(148, 163, 184, 0.12);
+}
+
+[data-testid="stSidebar"] .stButton button {
+    border-radius: 12px;
+    border: 1px solid rgba(148, 163, 184, 0.20);
+    padding-top: 0.55rem;
+    padding-bottom: 0.55rem;
+}
+
+.sidebar-mini-card {
+    border: 1px solid rgba(148, 163, 184, 0.18);
+    border-radius: 16px;
+    padding: 0.8rem 0.85rem;
+    background: rgba(100, 116, 139, 0.06);
+    margin-bottom: 0.9rem;
 }
 </style>
 """, unsafe_allow_html=True)
@@ -151,7 +199,6 @@ if "messages" not in st.session_state:
 if "last_result" not in st.session_state:
     st.session_state.last_result = None
 
-
 # ---------- Helpers ----------
 def classify_status(result: dict) -> str:
     if not result:
@@ -162,13 +209,11 @@ def classify_status(result: dict) -> str:
         return "Low confidence"
     return "In scope"
 
-
 def top_score(result: dict):
     docs = result.get("retrieved_docs") if result else None
     if docs and len(docs) > 0:
         return docs[0]["score"]
     return None
-
 
 def render_metric_card(label: str, value: str):
     st.markdown(
@@ -181,15 +226,14 @@ def render_metric_card(label: str, value: str):
         unsafe_allow_html=True,
     )
 
-
 def run_query(query: str):
     with st.status("Running pipeline...", expanded=True) as status:
         st.write("1. Intent classification")
-        time.sleep(0.10)
+        time.sleep(0.08)
         result = bot.respond(query)
 
         st.write("2. Semantic retrieval")
-        time.sleep(0.10)
+        time.sleep(0.08)
 
         if result.get("retrieved_docs"):
             st.write("3. Grounded response construction")
@@ -197,9 +241,7 @@ def run_query(query: str):
             st.write("3. Fallback response")
 
         status.update(label="Pipeline complete", state="complete", expanded=False)
-
     return result
-
 
 def push_message(role, content, query=None, intent=None, retrieved_docs=None, status="ready"):
     st.session_state.messages.append({
@@ -211,18 +253,25 @@ def push_message(role, content, query=None, intent=None, retrieved_docs=None, st
         "status": status,
     })
 
-
 def load_metrics_table():
     return pd.DataFrame({
         "Metric": ["Validation Accuracy", "Test Accuracy", "Macro F1", "OOS Recall"],
         "Value": ["0.9357", "0.8857", "0.8820", "0.6000"]
     })
 
-
 # ---------- Sidebar ----------
 with st.sidebar:
     st.title("Demo Controls")
     st.caption("Academic Chatbot")
+
+    st.markdown("""
+    <div class="sidebar-mini-card">
+        <div style="font-weight:700; margin-bottom:0.35rem;">Quick start</div>
+        <div style="font-size:0.84rem; opacity:0.78;">
+            Try a course question, a concept question, and an out-of-scope question to inspect different system behaviors.
+        </div>
+    </div>
+    """, unsafe_allow_html=True)
 
     st.markdown("### Suggested queries")
     quick_queries = [
@@ -261,7 +310,6 @@ with st.sidebar:
         st.session_state.last_result = None
         st.rerun()
 
-
 # ---------- Header ----------
 st.markdown("""
 <div class="hero">
@@ -287,7 +335,6 @@ st.markdown("""
 </div>
 """, unsafe_allow_html=True)
 
-
 # ---------- Top metrics ----------
 result = st.session_state.last_result
 intent_value = result["intent"] if result else "—"
@@ -302,14 +349,14 @@ with m2:
 with m3:
     render_metric_card("Answer Status", status_value)
 
-st.markdown("<div style='height:0.7rem;'></div>", unsafe_allow_html=True)
-
+st.markdown("<div style='height:0.75rem;'></div>", unsafe_allow_html=True)
 
 # ---------- Main layout ----------
-left_col, right_col = st.columns([1.7, 1.05], gap="large")
+left_col, right_col = st.columns([1.65, 1.0], gap="large")
 
 with left_col:
     st.markdown('<div class="section-title">Conversation</div>', unsafe_allow_html=True)
+    st.markdown('<div class="chat-panel">', unsafe_allow_html=True)
 
     if len(st.session_state.messages) <= 1:
         st.markdown(
@@ -321,6 +368,7 @@ with left_col:
             """,
             unsafe_allow_html=True,
         )
+        st.markdown("<div style='height:0.8rem;'></div>", unsafe_allow_html=True)
 
     for msg in st.session_state.messages:
         with st.chat_message(msg["role"]):
@@ -351,8 +399,11 @@ with left_col:
         st.session_state.last_result = result
         st.rerun()
 
+    st.markdown("</div>", unsafe_allow_html=True)
+
 with right_col:
     st.markdown('<div class="section-title">Why this answer?</div>', unsafe_allow_html=True)
+    st.markdown('<div class="side-panel">', unsafe_allow_html=True)
 
     if not result:
         st.markdown(
@@ -417,9 +468,12 @@ with right_col:
         else:
             st.success("The response is grounded in retrieved course knowledge and passed the confidence threshold.")
 
-    st.markdown("<div style='height:0.8rem;'></div>", unsafe_allow_html=True)
+    st.markdown("</div>", unsafe_allow_html=True)
+
+    st.markdown("<div style='height:0.9rem;'></div>", unsafe_allow_html=True)
 
     st.markdown('<div class="section-title">Evaluation snapshot</div>', unsafe_allow_html=True)
+    st.markdown('<div class="eval-panel">', unsafe_allow_html=True)
     st.dataframe(load_metrics_table(), use_container_width=True, hide_index=True)
 
     if CONF_MATRIX_PATH.exists():
@@ -427,3 +481,5 @@ with right_col:
         st.image(str(CONF_MATRIX_PATH), width=540)
     else:
         st.info("Confusion matrix image not found in results/.")
+
+    st.markdown("</div>", unsafe_allow_html=True)
