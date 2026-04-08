@@ -33,40 +33,40 @@ st.set_page_config(
 st.markdown("""
 <style>
 .block-container {
-    max-width: 1600px;
-    padding-top: 1.2rem;
-    padding-bottom: 1.5rem;
+    max-width: 1580px;
+    padding-top: 1.15rem;
+    padding-bottom: 1.4rem;
 }
 
-/* Use theme-aware colors instead of hardcoded white backgrounds */
 .card {
-    background: color-mix(in srgb, var(--background-color, #0e1117) 92%, white 8%);
-    border: 1px solid rgba(128,128,128,0.22);
+    background: rgba(30, 41, 59, 0.58);
+    border: 1px solid rgba(148, 163, 184, 0.16);
     border-radius: 20px;
     padding: 1rem 1rem 0.9rem 1rem;
-    box-shadow: 0 6px 18px rgba(0,0,0,0.08);
+    box-shadow: 0 4px 18px rgba(0, 0, 0, 0.12);
+    backdrop-filter: blur(6px);
 }
 
 .hero {
-    background: linear-gradient(135deg, rgba(37,99,235,0.16), rgba(14,165,233,0.10));
-    border: 1px solid rgba(96,165,250,0.28);
+    background: linear-gradient(135deg, rgba(37,99,235,0.18), rgba(14,165,233,0.10));
+    border: 1px solid rgba(96,165,250,0.22);
     border-radius: 24px;
     padding: 1.2rem 1.2rem 1rem 1.2rem;
     margin-bottom: 1rem;
 }
 
 .metric-card {
-    background: color-mix(in srgb, var(--background-color, #0e1117) 90%, white 10%);
-    border: 1px solid rgba(128,128,128,0.22);
+    background: rgba(30, 41, 59, 0.72);
+    border: 1px solid rgba(148, 163, 184, 0.16);
     border-radius: 18px;
     padding: 0.9rem 1rem;
-    min-height: 100px;
+    min-height: 96px;
 }
 
 .metric-label {
     font-size: 0.82rem;
-    opacity: 0.75;
-    margin-bottom: 0.2rem;
+    opacity: 0.78;
+    margin-bottom: 0.25rem;
 }
 
 .metric-value {
@@ -83,15 +83,15 @@ st.markdown("""
 
 .soft-label {
     font-size: 0.83rem;
-    opacity: 0.75;
+    opacity: 0.78;
     margin-bottom: 0.25rem;
 }
 
 .answer-box {
-    border: 1px solid rgba(128,128,128,0.22);
+    border: 1px solid rgba(148, 163, 184, 0.16);
     border-radius: 16px;
     padding: 0.8rem 0.9rem;
-    background: color-mix(in srgb, var(--background-color, #0e1117) 94%, white 6%);
+    background: rgba(15, 23, 42, 0.42);
 }
 
 .small-note {
@@ -103,33 +103,42 @@ st.markdown("""
     display: inline-block;
     padding: 0.28rem 0.62rem;
     border-radius: 999px;
-    border: 1px solid rgba(128,128,128,0.22);
+    border: 1px solid rgba(148, 163, 184, 0.16);
     font-size: 0.78rem;
     font-weight: 600;
     margin-right: 0.35rem;
     margin-top: 0.35rem;
+    background: rgba(15, 23, 42, 0.34);
 }
 
 .chat-shell {
-    min-height: 720px;
+    min-height: 560px;
+}
+
+.empty-panel {
+    border: 1px dashed rgba(148, 163, 184, 0.18);
+    border-radius: 18px;
+    padding: 1rem;
+    background: rgba(15, 23, 42, 0.28);
 }
 
 div[data-testid="stChatMessage"] {
     border-radius: 18px;
 }
 
-[data-testid="stSidebar"] .stButton button {
-    text-align: left;
-}
-
 hr.soft {
     border: none;
-    border-top: 1px solid rgba(128,128,128,0.18);
+    border-top: 1px solid rgba(148, 163, 184, 0.14);
     margin: 0.8rem 0 1rem 0;
+}
+
+/* raw metrics box */
+div[data-testid="stCodeBlock"] pre {
+    font-size: 0.88rem !important;
+    line-height: 1.45 !important;
 }
 </style>
 """, unsafe_allow_html=True)
-
 
 # ---------- App state ----------
 @st.cache_resource
@@ -317,6 +326,17 @@ with left_col:
     st.markdown('<div class="card chat-shell">', unsafe_allow_html=True)
     st.markdown('<div class="section-title">Conversation</div>', unsafe_allow_html=True)
 
+    if len(st.session_state.messages) <= 1:
+        st.markdown(
+            """
+            <div class="empty-panel">
+                Start the conversation with a course-related or concept-related question.
+                You can ask about grading, instructor, project, syllabus, transformers, BERT, RAG, and related NLP topics.
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
+
     for msg in st.session_state.messages:
         with st.chat_message(msg["role"]):
             st.markdown(msg["content"])
@@ -347,14 +367,22 @@ with left_col:
         st.rerun()
 
     st.markdown("</div>", unsafe_allow_html=True)
-
+    
 with right_col:
     # Why this answer
     st.markdown('<div class="card">', unsafe_allow_html=True)
     st.markdown('<div class="section-title">Why this answer?</div>', unsafe_allow_html=True)
 
     if not result:
-        st.info("Ask a question to inspect intent, confidence, retrieved evidence, and evaluation artifacts.")
+        st.markdown(
+            """
+            <div class="empty-panel">
+                Ask a question to inspect intent classification, retrieval confidence,
+                retrieved evidence, and evaluation artifacts.
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
     else:
         score = top_score(result)
         status_now = classify_status(result)
@@ -427,6 +455,6 @@ with right_col:
     if METRICS_PATH.exists():
         with st.expander("Open raw metrics.txt"):
             with open(METRICS_PATH, "r", encoding="utf-8") as f:
-                st.text(f.read())
+                st.code(f.read(), language="text")
 
     st.markdown("</div>", unsafe_allow_html=True)
