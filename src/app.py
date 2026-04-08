@@ -37,7 +37,6 @@ st.markdown("""
     padding-bottom: 1.4rem;
 }
 
-/* Main palette */
 .hero {
     background: linear-gradient(135deg, rgba(59,130,246,0.10), rgba(14,165,233,0.06));
     border: 1px solid rgba(148, 163, 184, 0.22);
@@ -109,29 +108,12 @@ st.markdown("""
     background: rgba(100, 116, 139, 0.06);
 }
 
-.chat-panel {
-    border: 1px solid rgba(148, 163, 184, 0.20);
-    border-radius: 24px;
-    background: rgba(100, 116, 139, 0.06);
-    padding: 1rem 1rem 0.8rem 1rem;
-    min-height: 680px;
+hr.soft {
+    border: none;
+    border-top: 1px solid rgba(148, 163, 184, 0.16);
+    margin: 0.8rem 0 1rem 0;
 }
 
-.side-panel {
-    border: 1px solid rgba(148, 163, 184, 0.20);
-    border-radius: 24px;
-    background: rgba(100, 116, 139, 0.06);
-    padding: 1rem;
-}
-
-.eval-panel {
-    border: 1px solid rgba(148, 163, 184, 0.20);
-    border-radius: 24px;
-    background: rgba(100, 116, 139, 0.06);
-    padding: 1rem;
-}
-
-/* Streamlit internals */
 div[data-testid="stChatMessage"] {
     border-radius: 18px;
     padding: 0.08rem 0;
@@ -146,13 +128,6 @@ div[data-testid="stChatInput"] {
     margin-top: 0.7rem;
 }
 
-hr.soft {
-    border: none;
-    border-top: 1px solid rgba(148, 163, 184, 0.16);
-    margin: 0.8rem 0 1rem 0;
-}
-
-/* Sidebar polish */
 [data-testid="stSidebar"] {
     border-right: 1px solid rgba(148, 163, 184, 0.12);
 }
@@ -356,34 +331,35 @@ left_col, right_col = st.columns([1.65, 1.0], gap="large")
 
 with left_col:
     st.markdown('<div class="section-title">Conversation</div>', unsafe_allow_html=True)
-    st.markdown('<div class="chat-panel">', unsafe_allow_html=True)
 
-    if len(st.session_state.messages) <= 1:
-        st.markdown(
-            """
-            <div class="empty-panel">
-                Start the conversation with a course-related or concept-related question.
-                You can ask about grading, instructor, project, syllabus, transformers, BERT, RAG, and related NLP topics.
-            </div>
-            """,
-            unsafe_allow_html=True,
-        )
-        st.markdown("<div style='height:0.8rem;'></div>", unsafe_allow_html=True)
+    chat_box = st.container(border=True)
+    with chat_box:
+        if len(st.session_state.messages) <= 1:
+            st.markdown(
+                """
+                <div class="empty-panel">
+                    Start the conversation with a course-related or concept-related question.
+                    You can ask about grading, instructor, project, syllabus, transformers, BERT, RAG, and related NLP topics.
+                </div>
+                """,
+                unsafe_allow_html=True,
+            )
+            st.markdown("<div style='height:0.8rem;'></div>", unsafe_allow_html=True)
 
-    for msg in st.session_state.messages:
-        with st.chat_message(msg["role"]):
-            st.markdown(msg["content"])
+        for msg in st.session_state.messages:
+            with st.chat_message(msg["role"]):
+                st.markdown(msg["content"])
 
-            if msg["role"] == "assistant" and msg.get("intent"):
-                st.markdown(
-                    f"""
-                    <span class="pill">Intent: {msg['intent']}</span>
-                    <span class="pill">Status: {msg.get('status', 'ready')}</span>
-                    """,
-                    unsafe_allow_html=True,
-                )
+                if msg["role"] == "assistant" and msg.get("intent"):
+                    st.markdown(
+                        f"""
+                        <span class="pill">Intent: {msg['intent']}</span>
+                        <span class="pill">Status: {msg.get('status', 'ready')}</span>
+                        """,
+                        unsafe_allow_html=True,
+                    )
 
-    user_prompt = st.chat_input("Ask a question about the course or LLM/NLP concepts...")
+        user_prompt = st.chat_input("Ask a question about the course or LLM/NLP concepts...")
 
     if user_prompt:
         push_message("user", user_prompt, query=user_prompt)
@@ -399,87 +375,84 @@ with left_col:
         st.session_state.last_result = result
         st.rerun()
 
-    st.markdown("</div>", unsafe_allow_html=True)
-
 with right_col:
     st.markdown('<div class="section-title">Why this answer?</div>', unsafe_allow_html=True)
-    st.markdown('<div class="side-panel">', unsafe_allow_html=True)
 
-    if not result:
-        st.markdown(
-            """
-            <div class="empty-panel">
-                Ask a question to inspect intent classification, retrieval confidence,
-                retrieved evidence, and evaluation artifacts.
-            </div>
-            """,
-            unsafe_allow_html=True,
-        )
-    else:
-        score = top_score(result)
-        status_now = classify_status(result)
-
-        a, b = st.columns(2)
-        with a:
-            st.markdown('<div class="soft-label">Predicted intent</div>', unsafe_allow_html=True)
-            st.markdown(f"<div class='answer-box'>{result['intent']}</div>", unsafe_allow_html=True)
-        with b:
-            st.markdown('<div class="soft-label">Status</div>', unsafe_allow_html=True)
-            st.markdown(f"<div class='answer-box'>{status_now}</div>", unsafe_allow_html=True)
-
-        st.markdown('<div class="soft-label" style="margin-top:0.8rem;">Final answer</div>', unsafe_allow_html=True)
-        st.markdown(f"<div class='answer-box'>{result['response']}</div>", unsafe_allow_html=True)
-
-        if score is not None:
-            st.markdown('<div class="soft-label" style="margin-top:0.8rem;">Top retrieval confidence</div>', unsafe_allow_html=True)
-            st.progress(min(max(float(score), 0.0), 1.0))
-            st.caption(f"Top score: {score:.3f}")
-
-        docs = result.get("retrieved_docs")
-        if docs:
-            st.markdown("<hr class='soft'>", unsafe_allow_html=True)
-            st.markdown('<div class="section-title">Retrieved evidence</div>', unsafe_allow_html=True)
-
-            evidence_df = pd.DataFrame([
-                {
-                    "Rank": i + 1,
-                    "Topic": d["topic"],
-                    "Subtopic": d["subtopic"],
-                    "Score": round(d["score"], 4),
-                }
-                for i, d in enumerate(docs)
-            ])
-            st.dataframe(evidence_df, use_container_width=True, hide_index=True)
-
-            for i, d in enumerate(docs, start=1):
-                with st.expander(f"Document {i} · {d['topic']} · {d['score']:.4f}", expanded=(i == 1)):
-                    st.markdown(f"**Subtopic:** {d['subtopic']}")
-                    st.markdown(f"**Question variation:** {d['question_variation']}")
-                    st.markdown(f"**Answer hint:** {d['answer_hint']}")
-                    st.markdown(f"**Context:** {d['context']}")
-
-        st.markdown("<hr class='soft'>", unsafe_allow_html=True)
-        st.markdown('<div class="section-title">Interpretation</div>', unsafe_allow_html=True)
-
-        if status_now == "Out of scope":
-            st.warning("The query was classified as outside the supported academic scope.")
-        elif status_now == "Low confidence":
-            st.warning("The query looks relevant, but retrieval confidence is not high enough for a reliable grounded answer.")
+    explain_box = st.container(border=True)
+    with explain_box:
+        if not result:
+            st.markdown(
+                """
+                <div class="empty-panel">
+                    Ask a question to inspect intent classification, retrieval confidence,
+                    retrieved evidence, and evaluation artifacts.
+                </div>
+                """,
+                unsafe_allow_html=True,
+            )
         else:
-            st.success("The response is grounded in retrieved course knowledge and passed the confidence threshold.")
+            score = top_score(result)
+            status_now = classify_status(result)
 
-    st.markdown("</div>", unsafe_allow_html=True)
+            a, b = st.columns(2)
+            with a:
+                st.markdown('<div class="soft-label">Predicted intent</div>', unsafe_allow_html=True)
+                st.markdown(f"<div class='answer-box'>{result['intent']}</div>", unsafe_allow_html=True)
+            with b:
+                st.markdown('<div class="soft-label">Status</div>', unsafe_allow_html=True)
+                st.markdown(f"<div class='answer-box'>{status_now}</div>", unsafe_allow_html=True)
+
+            st.markdown('<div class="soft-label" style="margin-top:0.8rem;">Final answer</div>', unsafe_allow_html=True)
+            st.markdown(f"<div class='answer-box'>{result['response']}</div>", unsafe_allow_html=True)
+
+            if score is not None:
+                st.markdown('<div class="soft-label" style="margin-top:0.8rem;">Top retrieval confidence</div>', unsafe_allow_html=True)
+                st.progress(min(max(float(score), 0.0), 1.0))
+                st.caption(f"Top score: {score:.3f}")
+
+            docs = result.get("retrieved_docs")
+            if docs:
+                st.markdown("<hr class='soft'>", unsafe_allow_html=True)
+                st.markdown('<div class="section-title">Retrieved evidence</div>', unsafe_allow_html=True)
+
+                evidence_df = pd.DataFrame([
+                    {
+                        "Rank": i + 1,
+                        "Topic": d["topic"],
+                        "Subtopic": d["subtopic"],
+                        "Score": round(d["score"], 4),
+                    }
+                    for i, d in enumerate(docs)
+                ])
+                st.dataframe(evidence_df, use_container_width=True, hide_index=True)
+
+                for i, d in enumerate(docs, start=1):
+                    with st.expander(f"Document {i} · {d['topic']} · {d['score']:.4f}", expanded=(i == 1)):
+                        st.markdown(f"**Subtopic:** {d['subtopic']}")
+                        st.markdown(f"**Question variation:** {d['question_variation']}")
+                        st.markdown(f"**Answer hint:** {d['answer_hint']}")
+                        st.markdown(f"**Context:** {d['context']}")
+
+            st.markdown("<hr class='soft'>", unsafe_allow_html=True)
+            st.markdown('<div class="section-title">Interpretation</div>', unsafe_allow_html=True)
+
+            if status_now == "Out of scope":
+                st.warning("The query was classified as outside the supported academic scope.")
+            elif status_now == "Low confidence":
+                st.warning("The query looks relevant, but retrieval confidence is not high enough for a reliable grounded answer.")
+            else:
+                st.success("The response is grounded in retrieved course knowledge and passed the confidence threshold.")
 
     st.markdown("<div style='height:0.9rem;'></div>", unsafe_allow_html=True)
 
     st.markdown('<div class="section-title">Evaluation snapshot</div>', unsafe_allow_html=True)
-    st.markdown('<div class="eval-panel">', unsafe_allow_html=True)
-    st.dataframe(load_metrics_table(), use_container_width=True, hide_index=True)
 
-    if CONF_MATRIX_PATH.exists():
-        st.markdown('<div class="soft-label" style="margin-top:0.8rem;">Confusion matrix</div>', unsafe_allow_html=True)
-        st.image(str(CONF_MATRIX_PATH), width=540)
-    else:
-        st.info("Confusion matrix image not found in results/.")
+    eval_box = st.container(border=True)
+    with eval_box:
+        st.dataframe(load_metrics_table(), use_container_width=True, hide_index=True)
 
-    st.markdown("</div>", unsafe_allow_html=True)
+        if CONF_MATRIX_PATH.exists():
+            st.markdown('<div class="soft-label" style="margin-top:0.8rem;">Confusion matrix</div>', unsafe_allow_html=True)
+            st.image(str(CONF_MATRIX_PATH), width=540)
+        else:
+            st.info("Confusion matrix image not found in results/.")
