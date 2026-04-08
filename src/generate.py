@@ -10,37 +10,107 @@ Original file is located at
 from typing import List, Dict
 
 
-def build_prompt(query: str, retrieved_docs: List[Dict]) -> str:
+def detect_query_type(query: str) -> str:
+    q = query.lower()
+
+    if "difference" in q or "vs" in q or "compare" in q:
+        return "comparison"
+    if q.startswith("why") or "why" in q:
+        return "why"
+    if q.startswith("when") or "week" in q:
+        return "when"
+    if q.startswith("what") or q.startswith("define"):
+        return "definition"
+
+    return "general"
+
+
+def score_doc(doc: Dict, query_type: str) -> float:
+    text = (
+        doc.get("question_variation", "").lower() +
+        " " +
+        doc.get("context", "").lower() +
+        " " +
+        doc.get("answer_hint", "").lower() +
+        " " +
+        doc.get("subtopic", "").lower()
+    )
+
+    score = doc["score"]
+
+    # query-type-aware boosting
+    if query_type == "definition":
+        if any(k in text for k in ["what is", "definition", "refers to"]):
+            score += 0.15
+
+    elif query_type == "why":
+        if any(k in text for k in ["important", "because", "used for", "helps", "reason"]):
+            score += 0.15
+
+    elif query_type == "when":
+        if any(k in text for k in ["week", "schedule", "covered", "timeline"]):
+            score += 0.2
+
+    elif query_type == "comparison":
+        if any(k in text for k in ["difference", "vs", "compared", "while", "whereas"]):
+            score += 0.2
+
+    return score
+
+
+def rerank_docs(query: str, docs: List[Dict]) -> List[Dict]:
+    query_type = detect_query_type(query)
+
+    scored = []
+    for doc in docs:
+        s = score_doc(doc, query_type)
+        scored.append((s, doc))
+
+    scored.sort(key=lambda x: x[0], reverse=True)
+    return [doc for _, doc in scored]
+
+
+def combine_answers(query_type: str, docs: List[Dict]) -> str:
     """
-    Create a prompt from retrieved contexts.
+    Combine multiple docs if needed for better answer quality.
     """
-    context_block = ""
 
-    for i, doc in enumerate(retrieved_docs):
-        context_block += f"{i+1}. {doc['context']}\n"
+    # For comparison → combine top 2
+    if query_type == "comparison" and len(docs) >= 2:
+        a1 = docs[0]["answer_hint"]
+        a2 = docs[1]["answer_hint"]
+        return f"{a1} Additionally, {a2}"
 
-    prompt = f"""
-You are an academic assistant.
+    # For "why" → enrich with second doc if useful
+    if query_type == "why" and len(docs) >= 2:
+        a1 = docs[0]["answer_hint"]
+        a2 = docs[1]["answer_hint"]
 
-Use the following context to answer the question clearly and concisely.
+        # avoid duplication
+        if a2 not in a1:
+            return f"{a1} {a2}"
 
-Context:
-{context_block}
-
-Question:
-{query}
-
-Answer:
-"""
-    return prompt.strip()
+    return docs[0]["answer_hint"]
 
 
 def generate_answer(query: str, retrieved_docs: List[Dict]) -> str:
     """
-    Lightweight response generation grounded in retrieved content.
+    Stronger RAG-lite generator:
+    - query-aware reranking
+    - answer selection
+    - optional multi-doc fusion
     """
+
     if not retrieved_docs:
         return "I could not find relevant information."
 
-    best = retrieved_docs[0]
-    return f"{best['answer_hint']} (Based on course knowledge.)"
+    # 1. detect type
+    query_type = detect_query_type(query)
+
+    # 2. rerank
+    docs = rerank_docs(query, retrieved_docs)
+
+    # 3. select / combine
+    answer = combine_answers(query_type, docs)
+
+    return f"{answer} (Based on course knowledge.)"
