@@ -62,7 +62,7 @@ def build_kb_terms(retriever):
 def correct_short_query(query, kb_terms):
     q = query.strip().lower()
 
-    if len(q.split()) <= 3 and "?" not in q:
+    if len(q.split()) <= 3 and not in q:
         matches = get_close_matches(q, kb_terms, n=1, cutoff=0.78)
         if matches:
             return matches[0]
