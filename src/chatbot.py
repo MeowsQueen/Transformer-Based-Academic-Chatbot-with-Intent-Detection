@@ -19,6 +19,28 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 MODEL_PATH = BASE_DIR / "models" / "intent_classifier.pkl"
 
 
+def normalize_short_query(query: str) -> str:
+    """
+    Convert very short fragment-like inputs into a definition-style query.
+    Examples:
+    - 'llm' -> 'What is llm?'
+    - 'rag' -> 'What is rag?'
+    - 'tokenization' -> 'What is tokenization?'
+    """
+    q = query.strip()
+
+    if not q:
+        return q
+
+    word_count = len(q.split())
+
+    # if it is a short fragment and not already a question, normalize it
+    if word_count <= 2 and "?" not in q:
+        return f"What is {q}?"
+
+    return query
+
+
 def rule_based_override(query: str):
     """
     Lightweight rule layer to better capture academic/course-related queries
@@ -51,14 +73,14 @@ def rule_based_override(query: str):
 
     # concept questions
     if any(word in q for word in [
-        "what is", "explain", "difference between",
+        "what is", "what are", "explain", "difference between",
         "bert", "transformer", "transformers",
         "embedding", "embeddings",
         "attention",
         "tokenization", "tokenizer", "token", "tokens",
         "rag", "fine tuning", "vector database",
         "llm", "llms", "large language model", "large language models",
-        "nlp"
+        "nlp", "ner"
     ]):
         return "concept_query"
 
@@ -111,6 +133,9 @@ class Chatbot:
         return self.clf.predict([query_clean])[0]
 
     def respond(self, query: str):
+        # 0. Normalize short fragment queries
+        query = normalize_short_query(query)
+
         # 1. Rule-based override first
         override_intent = rule_based_override(query)
 
