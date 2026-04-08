@@ -22,7 +22,7 @@ from src.preprocess import clean_text
 BASE_DIR = Path(__file__).resolve().parent.parent
 KB_PATH = BASE_DIR / "data" / "processed" / "knowledge_base.csv"
 EMBEDDINGS_PATH = BASE_DIR / "models" / "kb_embeddings.npy"
-MODEL_NAME = "all-MiniLM-L6-v2"
+MODEL_NAME = "BAAI/bge-base-en-v1.5"
 
 
 def tokenize_for_match(text: str):
