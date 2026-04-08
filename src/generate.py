@@ -10,6 +10,9 @@ Original file is located at
 from typing import List, Dict
 
 
+
+# Query type detection
+
 def detect_query_type(query: str) -> str:
     q = query.lower()
 
@@ -17,46 +20,64 @@ def detect_query_type(query: str) -> str:
         return "comparison"
     if q.startswith("why") or "why" in q:
         return "why"
-    if q.startswith("when") or "week" in q:
+    if q.startswith("when") or "which week" in q or "covered" in q:
         return "when"
-    if q.startswith("what") or q.startswith("define"):
+    if q.startswith("what") or "define" in q or "what are" in q:
         return "definition"
 
     return "general"
 
 
+
+# Scoring function
+
 def score_doc(doc: Dict, query_type: str) -> float:
     text = (
-        doc.get("question_variation", "").lower() +
-        " " +
-        doc.get("context", "").lower() +
-        " " +
-        doc.get("answer_hint", "").lower() +
-        " " +
-        doc.get("subtopic", "").lower()
+        doc.get("question_variation", "").lower()
+        + " "
+        + doc.get("context", "").lower()
+        + " "
+        + doc.get("answer_hint", "").lower()
+        + " "
+        + doc.get("subtopic", "").lower()
+        + " "
+        + doc.get("topic", "").lower()
     )
 
     score = doc["score"]
 
-    # query-type-aware boosting
+    # Definition boost
     if query_type == "definition":
-        if any(k in text for k in ["what is", "definition", "refers to"]):
-            score += 0.15
+        if any(k in text for k in [
+            "is a", "refers to", "defined as", "are units", "called tokens"
+        ]):
+            score += 0.2
 
+    # Why boost
     elif query_type == "why":
-        if any(k in text for k in ["important", "because", "used for", "helps", "reason"]):
-            score += 0.15
+        if any(k in text for k in [
+            "important", "because", "used for", "helps", "affects", "reason"
+        ]):
+            score += 0.2
 
+    # When boost (VERY strong)
     elif query_type == "when":
-        if any(k in text for k in ["week", "schedule", "covered", "timeline"]):
-            score += 0.2
+        if any(k in text for k in [
+            "week", "covered in week", "taught in week", "schedule"
+        ]):
+            score += 0.4  # stronger boost
 
+    # Comparison boost
     elif query_type == "comparison":
-        if any(k in text for k in ["difference", "vs", "compared", "while", "whereas"]):
-            score += 0.2
+        if any(k in text for k in [
+            "difference", "while", "whereas", "compared"
+        ]):
+            score += 0.25
 
     return score
 
+
+# Reranking
 
 def rerank_docs(query: str, docs: List[Dict]) -> List[Dict]:
     query_type = detect_query_type(query)
@@ -70,47 +91,63 @@ def rerank_docs(query: str, docs: List[Dict]) -> List[Dict]:
     return [doc for _, doc in scored]
 
 
+
+# Deduplication
+
+def is_redundant(a: str, b: str) -> bool:
+    a = a.lower()
+    b = b.lower()
+
+    # simple overlap check
+    return a in b or b in a
+
+
+# Answer combination
+
 def combine_answers(query_type: str, docs: List[Dict]) -> str:
-    """
-    Combine multiple docs if needed for better answer quality.
-    """
+    primary = docs[0]["answer_hint"]
 
-    # For comparison → combine top 2
-    if query_type == "comparison" and len(docs) >= 2:
-        a1 = docs[0]["answer_hint"]
-        a2 = docs[1]["answer_hint"]
-        return f"{a1} Additionally, {a2}"
+    if len(docs) < 2:
+        return primary
 
-    # For "why" → enrich with second doc if useful
-    if query_type == "why" and len(docs) >= 2:
-        a1 = docs[0]["answer_hint"]
-        a2 = docs[1]["answer_hint"]
+    secondary = docs[1]["answer_hint"]
 
-        # avoid duplication
-        if a2 not in a1:
-            return f"{a1} {a2}"
+    # avoid duplication
+    if is_redundant(primary, secondary):
+        return primary
 
-    return docs[0]["answer_hint"]
+    # Definition → keep clean, no merge
+    if query_type == "definition":
+        return primary
 
+    # Why → enrich slightly
+    if query_type == "why":
+        return f"{primary} {secondary}"
+
+    # Comparison → combine carefully
+    if query_type == "comparison":
+        return f"{primary} Additionally, {secondary}"
+
+    # When → only use best (important!)
+    if query_type == "when":
+        return primary
+
+    return primary
+
+
+
+# Main generator
 
 def generate_answer(query: str, retrieved_docs: List[Dict]) -> str:
-    """
-    Stronger RAG-lite generator:
-    - query-aware reranking
-    - answer selection
-    - optional multi-doc fusion
-    """
-
     if not retrieved_docs:
         return "I could not find relevant information."
 
-    # 1. detect type
     query_type = detect_query_type(query)
 
-    # 2. rerank
+    # rerank docs
     docs = rerank_docs(query, retrieved_docs)
 
-    # 3. select / combine
+    # select / combine
     answer = combine_answers(query_type, docs)
 
     return f"{answer} (Based on course knowledge.)"
