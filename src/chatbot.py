@@ -20,6 +20,17 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 MODEL_PATH = BASE_DIR / "models" / "intent_classifier.pkl"
 
 
+def looks_like_question(query: str) -> bool:
+    q = query.strip().lower()
+
+    question_starters = [
+        "what", "how", "why", "when", "who", "where", "which",
+        "is", "are", "does", "do", "can", "could", "should"
+    ]
+
+    return any(q.startswith(starter + " ") for starter in question_starters)
+
+
 def normalize_short_query(query: str) -> str:
     """
     Convert very short fragment-like inputs into a definition-style query.
@@ -27,6 +38,8 @@ def normalize_short_query(query: str) -> str:
     - 'llm' -> 'What is llm?'
     - 'rag' -> 'What is rag?'
     - 'tokenization' -> 'What is tokenization?'
+
+    But if the input already looks like a question, keep it unchanged.
     """
     q = query.strip()
 
@@ -35,7 +48,7 @@ def normalize_short_query(query: str) -> str:
 
     word_count = len(q.split())
 
-    if word_count <= 2 and "?" not in q:
+    if word_count <= 2 and not looks_like_question(q):
         return f"What is {q}?"
 
     return query
@@ -62,7 +75,8 @@ def build_kb_terms(retriever):
 def correct_short_query(query, kb_terms):
     q = query.strip().lower()
 
-    if len(q.split()) <= 3 and not in q:
+    # only attempt fuzzy correction for short fragment-like inputs
+    if len(q.split()) <= 3 and not looks_like_question(q):
         matches = get_close_matches(q, kb_terms, n=1, cutoff=0.78)
         if matches:
             return matches[0]
@@ -162,7 +176,7 @@ class Chatbot:
         return self.clf.predict([query_clean])[0]
 
     def respond(self, query: str):
-        # 0. Lazy typo correction for short inputs
+        # 0. Lazy typo correction for short fragment-like inputs
         try:
             if not hasattr(self, "kb_terms"):
                 self.kb_terms = build_kb_terms(self.retriever)
