@@ -98,6 +98,7 @@ Transformer-Based-Academic-Chatbot-with-Intent-Detection-and-RAG-lite-Response-G
 ├── results/
 │   ├── metrics.txt
 │   ├── confusion_matrix.png
+│   ├── retrieval_performance_metrics.png
 │   └── sample_outputs.txt
 │
 ├── notebooks/
