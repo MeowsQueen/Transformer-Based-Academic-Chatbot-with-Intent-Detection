@@ -44,6 +44,8 @@ Compared to a basic retrieval-based chatbot, this system includes:
 
 ## Demo
 
+🔗 **Live Demo:** https://your-streamlit-link.streamlit.app
+
 ### Chatbot Interface Overview
 ![Chatbot Interface Overview](assets/chatbot_interface_overview.png)
 
@@ -51,6 +53,7 @@ Compared to a basic retrieval-based chatbot, this system includes:
 ![Evaluation Panel](assets/chatbot_interface_evaluation_panel.png)
 
 ---
+
 ## Project Structure
 
 The system consists of three main components:
