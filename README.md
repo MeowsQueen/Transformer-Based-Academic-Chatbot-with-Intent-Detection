@@ -44,7 +44,8 @@ Compared to a basic retrieval-based chatbot, this system includes:
 
 ## Demo
 
-🔗 **Live Demo:** [(https://academic-ragbot.streamlit.app/)]
+🔗 **Live Demo:** https://academic-ragbot.streamlit.app/
+
 ### Chatbot Interface Overview
 ![Chatbot Interface Overview](assets/chatbot_interface_overview.png)
 
