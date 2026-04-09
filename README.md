@@ -72,6 +72,10 @@ The system consists of three main components:
 
 ```text
 Transformer-Based-Academic-Chatbot-with-Intent-Detection-and-RAG-lite-Response-Generation/
+├── assets/
+│   ├── chatbot_interface_overview.png
+│   └── chatbot_interface_evaluation_panel.png
+│
 ├── data/
 │   ├── raw/
 │   │   └── clinc150_full.json
